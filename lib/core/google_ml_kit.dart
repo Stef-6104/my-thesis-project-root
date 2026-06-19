@@ -41,14 +41,20 @@ class _OCRScreenState extends State<OCRScreen> {
   bool _loading = false;
 
   Future<void> saveOcrAsJson({
-    required String imageName,
+    required File imageFile,
     required String recognizedText,
   }) async {
     final directory = await getApplicationDocumentsDirectory();
 
+    final imageName = imageFile.path.split('/').last;
+    final imagePath = imageFile.path;
+    final fileSize = await imageFile.length();
+
     final jsonData = {
       "timestamp": DateTime.now().toIso8601String(),
       "image": imageName,
+      "imagePath": imagePath,
+      "fileSizeBytes": fileSize,
       "text": recognizedText,
     };
 
@@ -60,8 +66,6 @@ class _OCRScreenState extends State<OCRScreen> {
     await file.writeAsString(
       const JsonEncoder.withIndent('  ').convert(jsonData),
     );
-
-    debugPrint('JSON saved: ${file.path}');
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -95,9 +99,8 @@ class _OCRScreenState extends State<OCRScreen> {
         _recognizedText = result.text;
       });
 
-      // ADD THIS
       await saveOcrAsJson(
-        imageName: imageFile.path.split('/').last,
+        imageFile: imageFile,
         recognizedText: result.text,
       );
 
