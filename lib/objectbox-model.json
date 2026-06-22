@@ -1,0 +1,108 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "2:5641021281272264174",
+      "lastPropertyId": "3:5782990194078271420",
+      "name": "MemoryItem",
+      "flags": 2,
+      "properties": [
+        {
+          "id": "1:6994047580540561463",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:9161832322320051394",
+          "name": "memoryNum",
+          "type": 1
+        },
+        {
+          "id": "3:5782990194078271420",
+          "name": "todoTaskId",
+          "indexId": "2:3075244279789264285",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "TodoTask"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "3:7082088160563669728",
+      "lastPropertyId": "8:683568028229824387",
+      "name": "TodoTask",
+      "flags": 2,
+      "properties": [
+        {
+          "id": "1:8664802120879950657",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6109641334446968284",
+          "name": "image",
+          "type": 9
+        },
+        {
+          "id": "3:3158815864398780723",
+          "name": "taskTitle",
+          "type": 9
+        },
+        {
+          "id": "4:5317474854459270699",
+          "name": "taskDescription",
+          "type": 9
+        },
+        {
+          "id": "5:7617005923575784707",
+          "name": "taskCreated",
+          "type": 9
+        },
+        {
+          "id": "6:2935928167812411647",
+          "name": "taskCompleted",
+          "type": 1
+        },
+        {
+          "id": "7:3926864191900518535",
+          "name": "taskNote",
+          "type": 9
+        },
+        {
+          "id": "8:683568028229824387",
+          "name": "taskDeadline",
+          "type": 9
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "3:7082088160563669728",
+  "lastIndexId": "2:3075244279789264285",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [
+    733585617409178034
+  ],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [
+    5699723661572846430,
+    3344861584151050767,
+    8543775698328051053,
+    2242668135846532794,
+    8499410760694797408,
+    6352211810431020316,
+    7404400906733572876,
+    1282978839355512294,
+    4634253288640487833
+  ],
+  "retiredRelationUids": [],
+  "version": 1
+}
