@@ -83,7 +83,7 @@ class _OCRScreenState extends State<OCRScreen> {
       String ocrText,
       ) async {
     final model = FirebaseAI.googleAI().generativeModel(
-      model: 'gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
     );
 
     final response = await model.generateContent([
