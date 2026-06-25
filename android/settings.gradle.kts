@@ -1,8 +1,6 @@
-import java.io.File
-
 // Patch .flutter-plugins-dependencies to avoid "dev_dependency" check failure in Flutter 3.24.3
 run {
-    val pluginsFile = File(settingsDir.parentFile, ".flutter-plugins-dependencies")
+    val pluginsFile = java.io.File(settingsDir.parentFile, ".flutter-plugins-dependencies")
     if (pluginsFile.exists()) {
         val contents = pluginsFile.readText()
         if (contents.contains("\"android\":") && !contents.contains("\"dev_dependency\":")) {
@@ -36,8 +34,7 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.7.0" apply false
-    id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+    id("com.android.application") version "8.11.1" apply false
 }
 
 include(":app")

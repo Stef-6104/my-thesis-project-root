@@ -234,7 +234,7 @@ packages:
     source: hosted
     version: "0.9.3+5"
   firebase_ai:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: firebase_ai
       sha256: "554f3fd94da1f59847aa9fd4d4bd075eb9733bdbd17e0263c19472f754dbc5c7"
@@ -290,7 +290,7 @@ packages:
     source: hosted
     version: "6.2.3"
   firebase_core:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: firebase_core
       sha256: d2625088d8f8836a7a74a7eb94a5372d70ad88382602ba2dcc02805c294d0d16
@@ -377,7 +377,7 @@ packages:
     source: hosted
     version: "0.11.1"
   google_mlkit_text_recognition:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: google_mlkit_text_recognition
       sha256: "10a8d1a64fa21efda89514f6df88bbb7885be3ae1bfb7a6d229132d802a20d22"
@@ -425,7 +425,7 @@ packages:
     source: hosted
     version: "4.1.2"
   image_picker:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: image_picker
       sha256: "91c025426c2881c551100bce834e201c835a170151545f58d17da5180ca7d9ac"
@@ -641,7 +641,7 @@ packages:
     source: hosted
     version: "1.9.1"
   path_provider:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: path_provider
       sha256: a7f4874f987173da295a61c181b8ee71dab59b332a486b391babf26a1b884825
