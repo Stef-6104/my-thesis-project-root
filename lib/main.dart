@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:my_thesis_project/data/gallery%20example/gallery_filesEx.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
-import 'package:my_thesis_project/screens/task_info_screen.dart';
+import 'package:my_thesis_project/presentation/screens/todo_list_screen.dart';
 import 'package:objectbox/objectbox.dart';
 
 import 'objectbox.g.dart';
