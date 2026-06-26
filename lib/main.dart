@@ -9,8 +9,16 @@ import 'package:objectbox/objectbox.dart';
 
 import 'objectbox.g.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
@@ -32,7 +40,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/database',
       routes: {
         "/gallery": (_) => const GalleryFilesEx(),
-        "/recognition" : (_) => const OCRApp(),
+        "/recognition" : (_) => const OCRScreen(),
         "/database" : (_) => const MyHomePage(title: 'Memory Hub'),
       },
     );
@@ -117,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
               tooltip: 'Open Gallery',
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const OCRApp()),
+                MaterialPageRoute(builder: (context) => const OCRScreen()),
               )
 
           )

@@ -9,34 +9,11 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_ai/firebase_ai.dart';
+import 'package:my_thesis_project/firebase_options.dart';
 
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
-
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp();
-
-  runApp(const OCRApp());
-}
-
-class OCRApp extends StatelessWidget {
-  const OCRApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'OCR Scanner',
-      theme: ThemeData(
-        colorSchemeSeed: Colors.blue,
-      ),
-      home: const OCRScreen(),
-    );
-  }
-}
 
 class OCRScreen extends StatefulWidget {
   const OCRScreen({super.key});
@@ -223,14 +200,9 @@ $ocrText
     return Scaffold(
       appBar: AppBar(
         title: const Text('OCR Scanner'),
-        leading:
-          IconButton(
+          leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const MyApp()),
-            )
-
+            onPressed: () => Navigator.pop(context),
           )
 
       ),

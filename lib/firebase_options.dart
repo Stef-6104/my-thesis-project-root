@@ -57,7 +57,6 @@ class DefaultFirebaseOptions {
     projectId: 'fir-ai-ensconse-test',
     storageBucket: 'fir-ai-ensconse-test.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCkvlJnbtXM3-sRPEbfrQYjNzM13XetiFc',
     appId: '1:432820843570:ios:e5805a1f069558f07cb82b',
@@ -66,7 +65,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'fir-ai-ensconse-test.firebasestorage.app',
     iosBundleId: 'com.example.myThesisProject',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCkvlJnbtXM3-sRPEbfrQYjNzM13XetiFc',
     appId: '1:432820843570:ios:e5805a1f069558f07cb82b',
