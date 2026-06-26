@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "432820843570",
+    "project_id": "fir-ai-ensconse-test",
+    "storage_bucket": "fir-ai-ensconse-test.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432820843570:android:66a5bbf755f810667cb82b",
+        "android_client_info": {
+          "package_name": "com.example.firebase_ai_test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADXeuDF3uLaycDv_AVg-TjEllAAcLFYlA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432820843570:android:ca2bad62a84df4d77cb82b",
+        "android_client_info": {
+          "package_name": "com.example.my_thesis_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADXeuDF3uLaycDv_AVg-TjEllAAcLFYlA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
