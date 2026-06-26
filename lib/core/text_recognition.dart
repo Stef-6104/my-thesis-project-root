@@ -16,13 +16,16 @@ import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
 
 class OCRScreen extends StatefulWidget {
-  const OCRScreen({super.key});
+  final Store store;
+  const OCRScreen({super.key, required this.store});
 
   @override
   State<OCRScreen> createState() => _OCRScreenState();
 }
 
 class _OCRScreenState extends State<OCRScreen> {
+
+
   final ImagePicker _picker = ImagePicker();
 
   File? _image;
@@ -182,6 +185,13 @@ $ocrText
 
       final aiData = await extractStructuredData(
         result.text,
+      );
+
+      await saveOCRToObjectBox(
+          imageFile: imageFile,
+          recognizedText: result.text,
+          aiData: aiData,
+          store: widget.store,
       );
 
       await saveOcrAsJson(

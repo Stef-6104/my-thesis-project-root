@@ -19,11 +19,14 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const MyApp());
+  final store = await openStore();
+
+  runApp( MyApp(store: store));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Store store;
+  const MyApp({super.key, required this.store});
 
   // This widget is the root of your application.
   @override
@@ -31,7 +34,6 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
 
-      title: 'Thesis Application',
       theme: ThemeData(
 
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -39,9 +41,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/database',
       routes: {
-        "/gallery": (_) => const GalleryFilesEx(),
-        "/recognition" : (_) => const OCRScreen(),
-        "/database" : (_) => const MyHomePage(title: 'Memory Hub'),
+        "/gallery" : (_) => const GalleryFilesEx(),
+        "/recognition" : (_) => OCRScreen(store: store),
+        "/database" : (_) => MyHomePage(title: 'Memory Hub', store: store),
       },
     );
 
@@ -51,41 +53,43 @@ class MyApp extends StatelessWidget {
 
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-
+  final Store store;
   final String title;
+
+
+  const MyHomePage({super.key, required this.title, required this.store});
+
+
+
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
-  Store? _store;
   late final Box<MemoryItem> _memoryBox;
   SyncClient? _syncClient;
 
-
-  MemoryItem? currentItem;
+  late Stream<List<MemoryItem>> _memoryStream;
 
   @override
   void initState() {
     super.initState();
-    openStore().then((Store store){
-      if (!mounted) return;
-      setState(() {
-        _store = store;
-        _memoryBox = store.box<MemoryItem>();
+        _memoryBox = widget.store.box<MemoryItem>();
         // 1. Corrected URI format
         var syncServerIp = Platform.isAndroid ? "10.0.2.2" : "127.0.0.1";
         // 2. Initialize and START the client
         _syncClient = SyncClient(
-            store,
+            widget.store,
             ['ws://$syncServerIp:9999'],
             [SyncCredentials.none()]
         );
         _syncClient?.start();
+
+        _memoryStream = _memoryBox
+            .query()
+            .watch(triggerImmediately: true)
+            .map((query) => query.find());
 
         if (_memoryBox.isEmpty()) {
           final exampleTask = TodoTask(
@@ -97,16 +101,16 @@ class _MyHomePageState extends State<MyHomePage> {
               taskNote: "Remember to test all Gradle versions.",
               taskDeadline: "2026-12-31"
           );
-          _store!.box<TodoTask>().put(exampleTask);
+          widget.store.box<TodoTask>().put(exampleTask);
 
           final exampleItem = MemoryItem();
           exampleItem.todoTask.target = exampleTask;
           _memoryBox.put(exampleItem);
         }
         // 3. Fetch item inside the callback to ensure _memoryBox is ready
-        currentItem = _memoryBox.getAll().firstOrNull;
-      });
-    });
+
+
+
   }
 
 
@@ -125,37 +129,66 @@ class _MyHomePageState extends State<MyHomePage> {
               tooltip: 'Open Gallery',
               onPressed: () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const OCRScreen()),
+                MaterialPageRoute(builder: (context) => OCRScreen(store: widget.store)),
               )
 
           )
         ],
       ),
-      body:
-      currentItem == null
-          ? const Center(child: Text("Memory Item does not Exist"),):
-      GestureDetector(
-        onTap: (){
-          final task = currentItem?.todoTask.target;
-          if (task != null){
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => TaskInfoScreen(task: task, store: _store!),
-                )
-            );
+      body: StreamBuilder<List<MemoryItem>>(
+        stream: _memoryStream,
+        builder: (context, snapshot){
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No memory yet"));
+
           }
+          final items = snapshot.data!;
+
+          // 4. GridView to show multiple tasks
+          return GridView.builder(
+            padding: const EdgeInsets.all(10),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+            ),
+            itemCount: items.length,
+            itemBuilder: (context, index){
+              final item = items[index];
+              final task = item.todoTask.target;
+
+              return GestureDetector(
+                  onTap: (){
+                    if (task != null){
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => TaskInfoScreen(task: task, store: widget.store),
+                          )
+                      );
+                    }
+                  },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(12
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(15),
+                  alignment: Alignment.center,
+                  child: Text(
+                    task?.taskTitle ??'No Task title',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold,fontSize: 16),
+                  ),
+                ),
+              );
+            },
+          );
         },
-        child: Container(
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.all(50),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(8),
-          ),
-            child: Text(currentItem!.todoTask.target?.taskTitle ??'No Task title',
-            style: TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ),
-      )
+      ),
+
+
+
       );
   }
   void setNewMemoryItm(){
@@ -168,7 +201,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void dispose(){
     _syncClient?.close();
-    _store?.close();
     super.dispose();
 
   }
