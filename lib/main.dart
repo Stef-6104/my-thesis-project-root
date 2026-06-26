@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:my_thesis_project/core/text_recognition.dart';
 import 'package:my_thesis_project/data/gallery%20example/gallery_filesEx.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
@@ -28,9 +29,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       debugShowCheckedModeBanner: false,
-      home: const MyHomePage(title: 'Memory Hub'),
+      initialRoute: '/database',
       routes: {
         "/gallery": (_) => const GalleryFilesEx(),
+        "/recognition" : (_) => const OCRApp(),
+        "/database" : (_) => const MyHomePage(title: 'Memory Hub'),
       },
     );
 
@@ -112,7 +115,11 @@ class _MyHomePageState extends State<MyHomePage> {
           IconButton(
               icon: const Icon(Icons.image),
               tooltip: 'Open Gallery',
-              onPressed: () => Navigator.pushNamed(context, "/gallery"),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const OCRApp()),
+              )
+
           )
         ],
       ),

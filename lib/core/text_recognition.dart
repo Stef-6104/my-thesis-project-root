@@ -3,11 +3,16 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:my_thesis_project/main.dart';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_ai/firebase_ai.dart';
+
+import 'package:my_thesis_project/data/models/todo_task.dart';
+import 'package:my_thesis_project/data/models/memory_item.dart';
+import 'package:my_thesis_project/objectbox.g.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +51,35 @@ class _OCRScreenState extends State<OCRScreen> {
   File? _image;
   String _recognizedText = '';
   bool _loading = false;
+
+  Future<void> saveOCRToObjectBox({
+    required File imageFile,
+    required String recognizedText,
+    required Map<String, dynamic> aiData,
+    required Store store,
+  }) async {
+    //1. Create Task from JSON
+    final newTask = TodoTask(
+      image: imageFile.path,
+      taskTitle: aiData['title'] ?? 'Untitled Scan',
+      taskDescription: aiData ['body'] ?? '',
+      taskCreated: DateTime.now().toIso8601String(),
+      taskDeadline: aiData['deadline'] ?? '',
+      taskNote: 'Generated via OCR',
+      ocrText: recognizedText,
+      fileSizeBytes: await imageFile.length(),
+      documentDate: aiData['date'],
+    );
+
+    //2. Create the MemoryItem wrapper
+    final memoryItem = MemoryItem();
+    memoryItem.todoTask.target = newTask;
+    memoryItem.memoryNum = true;
+
+    //3. Save to db
+    store.box<MemoryItem>().put(memoryItem);
+
+  }
 
   Future<void> saveOcrAsJson({
     required File imageFile,
@@ -189,6 +223,16 @@ $ocrText
     return Scaffold(
       appBar: AppBar(
         title: const Text('OCR Scanner'),
+        leading:
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MyApp()),
+            )
+
+          )
+
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

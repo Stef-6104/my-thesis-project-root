@@ -16,6 +16,11 @@ class TodoTask {
   String taskNote;
   String taskDeadline;
 
+  String? ocrText;
+  int? fileSizeBytes;
+  String? documentDate;
+
+
   //relationship to the each memory item
   @Backlink('todoTask')
   final memoryItem = ToMany<MemoryItem>();
@@ -27,8 +32,10 @@ class TodoTask {
     required this.taskDescription,
     required this.taskCreated,
     this.taskCompleted = false,
-    required this.taskNote,
-    required this.taskDeadline
-
+    this.taskNote ="",
+    this.taskDeadline ="",
+    this.fileSizeBytes,
+    this.ocrText,
+    this.documentDate
 });
 }
