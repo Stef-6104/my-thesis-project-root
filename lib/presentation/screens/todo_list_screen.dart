@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
+import 'dart:io';
 
 class TaskInfoScreen extends StatefulWidget {
   final TodoTask task;
@@ -61,6 +62,28 @@ class _TaskInfoScreenState extends State<TaskInfoScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (widget.task.image.isNotEmpty)
+              Container(
+                height: 250,
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadiusGeometry.circular(12),
+                  child: Image.file(
+                    File(widget.task.image),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 5),
+            const Text("Title:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+            const SizedBox(height: 5),
+            Text(widget.task.taskTitle, style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 5),
             const Text("Description:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             const SizedBox(height: 5),
             Text(widget.task.taskDescription, style: const TextStyle(fontSize: 16)),
