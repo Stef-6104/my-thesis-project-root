@@ -102,52 +102,65 @@ class _OCRScreenState extends State<OCRScreen> {
 
     final response = await model.generateContent([
       Content.text('''
-Analyze the following OCR text.
-
-Determine:
-
-1. title
-   - Main heading or title of the document.
-   - If none exists, return null.
-
-2. date
-   - The primary document date.
-   - Convert to YYYY-MM-DD when possible.
-   - If none exists, return null.
-
-3. deadline
-   - Submission date, due date, closing date, deadline, etc.
-   - Convert to YYYY-MM-DD when possible.
-   - If none exists, return null.
-
-4. body
-   - The main content of the document excluding title and dates.
-
-Return ONLY valid JSON.
-
-Format:
-
-{
-  "title": "...",
-  "date": "...",
-  "deadline": "...",
-  "body": "..."
-}
-
-OCR TEXT:
-
-$ocrText
-''')
+        Analyze the following OCR text.
+        
+        Determine:
+        
+        1. title
+           - Main heading or title of the document.
+           - If none exists, return null.
+        
+        2. date
+           - The primary document date.
+           - Convert to YYYY-MM-DD when possible.
+           - If none exists, return null.
+        
+        3. deadline
+           - Submission date, due date, closing date, deadline, etc.
+           - Convert to YYYY-MM-DD when possible.
+           - If none exists, return null.
+        
+        4. body
+           - The main content of the document excluding title and dates.
+        
+        Return ONLY valid JSON.
+        
+        Format:
+        
+        {
+          "title": "...",
+          "date": "...",
+          "deadline": "...",
+          "body": "..."
+        }
+        
+        OCR TEXT:
+        
+        $ocrText
+        ''')
     ]);
 
     final text = response.text ?? '{}';
 
+    print(response.text);
+
+// Remove Markdown code fences if present.
+    final cleanedText = text
+        .replaceAll('```json', '')
+        .replaceAll('```', '')
+        .trim();
+
+    print("Gemini Response:");
+    print(cleanedText);
+
     try {
-      return jsonDecode(text);
-    } catch (_) {
+      return jsonDecode(cleanedText);
+    } catch (e) {
+      print("JSON Decode Error: $e");
+
       return {
         "error": "Invalid JSON returned",
-        "rawResponse": text,
+        "rawResponse": cleanedText,
       };
     }
   }
@@ -183,9 +196,20 @@ $ocrText
         _recognizedText = result.text;
       });
 
+
+
       final aiData = await extractStructuredData(
         result.text,
       );
+
+      // PRINT THE RESULT HERE
+      print("AI Result:");
+      print(aiData);
+
+      print("Title: ${aiData["title"]}");
+      print("Date: ${aiData["date"]}");
+      print("Deadline: ${aiData["deadline"]}");
+      print("Body: ${aiData["body"]}");
 
       await saveOCRToObjectBox(
           imageFile: imageFile,
