@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
+import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'dart:io';
 
 class TaskInfoScreen extends StatefulWidget {
@@ -40,6 +41,30 @@ class _TaskInfoScreenState extends State<TaskInfoScreen> {
     );
   }
 
+  void _deleteTask(){
+    //this will identify the boxes
+    final memoryBox = widget.store.box<MemoryItem>();
+    final taskBox = widget.store.box<TodoTask>();
+
+    //Find and delete the associated MemoryItem/s
+    final associatedMemoryIds = widget.task.memoryItem.map((m) => m.id).toList();
+    memoryBox.removeMany(associatedMemoryIds);
+
+    //Delete the TodoTask itself
+    taskBox.remove(widget.task.id);
+
+    //Will notify the user
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Task permanently deleted")
+      ),
+
+    );
+
+    Navigator.pop(context);
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,7 +100,7 @@ class _TaskInfoScreenState extends State<TaskInfoScreen> {
                   borderRadius: BorderRadiusGeometry.circular(12),
                   child: Image.file(
                     File(widget.task.image),
-                    fit: BoxFit.cover,
+                    fit: BoxFit.fill,
                   ),
                 ),
               ),
@@ -121,6 +146,29 @@ class _TaskInfoScreenState extends State<TaskInfoScreen> {
                   foregroundColor: widget.task.taskCompleted ? Colors.white : null,
                 ),
               ),
+            ),
+            const SizedBox(height: 10),
+            Center (
+              child: ElevatedButton.icon(
+                  onPressed: () {
+
+                  },
+                  label: Text("Attach to Calendar"),
+                  ),
+            ),
+            const SizedBox(height: 25),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton.filled(
+                  onPressed: _deleteTask,
+                  icon: const Icon(Icons.delete
+                  ),
+                  style: IconButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      iconSize: 24),
+                ),
+              ],
             ),
           ],
         ),

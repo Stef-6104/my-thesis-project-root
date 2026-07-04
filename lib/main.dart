@@ -139,7 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
         stream: _memoryStream,
         builder: (context, snapshot){
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No memory yet"));
+            return const Center(child: Text("Your Memory Hub is Empty"));
 
           }
           final items = snapshot.data!;
