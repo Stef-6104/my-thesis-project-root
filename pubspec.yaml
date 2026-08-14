@@ -37,7 +37,7 @@ dependencies:
   objectbox: ^5.3.2
   objectbox_sync_flutter_libs: any
   image_picker: ^1.1.2
-  google_mlkit_text_recognition: ^0.15.0
+  google_mlkit_text_recognition: ^0.16.0
   path_provider: ^2.1.5
   firebase_core: ^4.11.0
   firebase_ai: ^3.13.0
