@@ -15,6 +15,8 @@ import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
 
+import 'package:my_thesis_project/services/calendar_service.dart';
+
 class OCRScreen extends StatefulWidget {
   final Store store;
   const OCRScreen({super.key, required this.store});
@@ -24,7 +26,10 @@ class OCRScreen extends StatefulWidget {
 }
 
 class _OCRScreenState extends State<OCRScreen> {
+  final GoogleCalendarService _calendarService =
+  GoogleCalendarService();
 
+  Map<String, dynamic>? _aiData;
 
   final ImagePicker _picker = ImagePicker();
 
@@ -196,11 +201,13 @@ class _OCRScreenState extends State<OCRScreen> {
         _recognizedText = result.text;
       });
 
-
-
       final aiData = await extractStructuredData(
         result.text,
       );
+
+      setState(() {
+        _aiData = aiData;
+      });
 
       // PRINT THE RESULT HERE
       print("AI Result:");
@@ -227,6 +234,43 @@ class _OCRScreenState extends State<OCRScreen> {
     } finally {
       await recognizer.close();
     }
+  }
+
+  Future<void> _addToCalendar() async {
+    if (_aiData == null) {
+      return;
+    }
+
+    final deadline = _aiData!['deadline'];
+
+    if (deadline == null ||
+        deadline.toString().trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No deadline was found.'),
+        ),
+      );
+
+      return;
+    }
+
+    final success = await _calendarService.addDeadline(
+      title: _aiData!['title'] ?? 'OCR Deadline',
+      deadline: deadline.toString(),
+      description: _aiData!['body'] ?? '',
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Added to Google Calendar!'
+              : 'Failed to add to Google Calendar.',
+        ),
+      ),
+    );
   }
 
   @override
@@ -295,6 +339,20 @@ class _OCRScreenState extends State<OCRScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            if (_aiData != null &&
+                _aiData!['deadline'] != null &&
+                _aiData!['deadline'].toString().isNotEmpty)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.calendar_month),
+                  label: const Text(
+                    'Add Deadline to Google Calendar',
+                  ),
+                  onPressed: _addToCalendar,
+                ),
+              ),
           ],
         ),
       ),
