@@ -1,23 +1,23 @@
 import 'dart:convert';
-
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 
 class GoogleCalendarService {
-  static const List<String> calendarScopes = [
+  static const List<String> _calendarScopes = [
     'https://www.googleapis.com/auth/calendar.events',
   ];
 
   Future<String?> _getAccessToken() async {
     try {
-      final user = await GoogleSignIn.instance.authenticate();
+      final GoogleSignInAccount? googleUser =
+      await GoogleSignIn.instance.authenticate();
+      if (googleUser == null) return null;
 
-      final authorization =
-      await user.authorizationClient.authorizeScopes(
-        calendarScopes,
-      );
+      final auths =
+      await googleUser.authorizationClient.authorizeScopes(_calendarScopes);
 
-      return authorization.accessToken;
+
+      return auths.accessToken;
     } catch (e) {
       print('Google Sign-In error: $e');
       return null;
@@ -29,6 +29,11 @@ class GoogleCalendarService {
     required String deadline,
     required String description,
   }) async {
+    final cleanDate = _formatDate(deadline);
+    if (cleanDate == null){
+      print("Error: Invalid date format received: $deadline ");
+      return false;
+    }
     final accessToken = await _getAccessToken();
 
     if (accessToken == null) {
@@ -39,10 +44,10 @@ class GoogleCalendarService {
       'summary': title,
       'description': description,
       'start': {
-        'date': deadline,
+        'date': cleanDate,
       },
       'end': {
-        'date': _nextDay(deadline),
+        'date': _nextDay(cleanDate),
       },
     };
 
@@ -57,17 +62,31 @@ class GoogleCalendarService {
       body: jsonEncode(event),
     );
 
-    print('Calendar response: ${response.statusCode}');
-    print(response.body);
+    if (response.statusCode != 200 && response.statusCode != 201){
+      print('Calendar API Error: ${response.body}');
+    }
+
 
     return response.statusCode == 200 ||
         response.statusCode == 201;
   }
 
-  String _nextDay(String date) {
-    final parsedDate = DateTime.parse(date);
+  String? _formatDate(String input){
+    try{
+      final date = DateTime.parse(input.trim());
+      return date.toIso8601String().substring(0, 10);
+    }
+    catch (_){
+      return null;
+    }
+  }
 
-    final nextDay = parsedDate.add(
+
+
+  String _nextDay(String dateString) {
+    final date = DateTime.parse(dateString);
+
+    final nextDay = date.add(
       const Duration(days: 1),
     );
 

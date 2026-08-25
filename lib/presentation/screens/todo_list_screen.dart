@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
+import 'package:my_thesis_project/services/calendar_service.dart';
 import 'dart:io';
 
 class TaskInfoScreen extends StatefulWidget {
@@ -15,6 +16,8 @@ class TaskInfoScreen extends StatefulWidget {
 }
 
 class _TaskInfoScreenState extends State<TaskInfoScreen> {
+  final GoogleCalendarService _calendarService = GoogleCalendarService();
+
   late TextEditingController _notesController;
 
   @override
@@ -150,10 +153,33 @@ class _TaskInfoScreenState extends State<TaskInfoScreen> {
             const SizedBox(height: 10),
             Center (
               child: ElevatedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
+                    String cleanDeadline = widget.task.taskDeadline.split('').first.trim();
+                    if (cleanDeadline.isEmpty){
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Cannot attach: Deadline is empty.")),
+                      );
+                      return;
+                    }
 
+                    final success = await _calendarService.addDeadline(
+                        title: widget.task.taskTitle,
+                        deadline: widget.task.taskDeadline,
+                        description: widget.task.taskDescription
+                    );
+
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content:
+                      Text(
+                        success? "Successfully added to Calendar!"
+                            : "Failed to add to Calendar. Check connection/date format."
+                      ),
+                      ),
+                    );
                   },
-                  label: Text("Attach to Calendar"),
+                  icon: const Icon(Icons.calendar_today),
+                  label: const Text("Attach to Calendar"),
                   ),
             ),
             const SizedBox(height: 25),
