@@ -21,7 +21,9 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await GoogleSignIn.instance.initialize();
+  await GoogleSignIn.instance.initialize(
+    serverClientId: '432820843570-8tq99r3llpbp2h1fhiarq227h4ph757d.apps.googleusercontent.com',
+  );
 
   final store = await openStore();
 

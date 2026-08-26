@@ -9,36 +9,64 @@ class GoogleCalendarService {
 
   Future<String?> _getAccessToken() async {
     try {
+      print('STEP 1: Starting Google authentication...');
+
       final GoogleSignInAccount? googleUser =
       await GoogleSignIn.instance.authenticate();
-      if (googleUser == null) return null;
+
+      print('STEP 2: authenticate() finished');
+
+      if (googleUser == null) {
+        print('STEP 2 ERROR: googleUser is null');
+        return null;
+      }
+
+      print('STEP 3: Google user: ${googleUser.email}');
+      print('STEP 4: Requesting Calendar permission...');
 
       final auths =
-      await googleUser.authorizationClient.authorizeScopes(_calendarScopes);
+      await googleUser.authorizationClient.authorizeScopes(
+        _calendarScopes,
+      );
 
+      print('STEP 5: Calendar authorization finished');
+      print('STEP 6: Access token received: ${auths.accessToken != null}');
 
       return auths.accessToken;
-    } catch (e) {
-      print('Google Sign-In error: $e');
+    } catch (e, stackTrace) {
+      print('GOOGLE SIGN-IN ERROR: $e');
+      print('STACK TRACE: $stackTrace');
       return null;
     }
   }
 
+  // 👇 REPLACE YOUR OLD addDeadline() WITH THIS
   Future<bool> addDeadline({
     required String title,
     required String deadline,
     required String description,
   }) async {
+    print('=== ADDING CALENDAR EVENT ===');
+    print('Title: $title');
+    print('Deadline: $deadline');
+
     final cleanDate = _formatDate(deadline);
-    if (cleanDate == null){
-      print("Error: Invalid date format received: $deadline ");
+
+    if (cleanDate == null) {
+      print('ERROR: Invalid date format: $deadline');
       return false;
     }
+
+    print('Formatted date: $cleanDate');
+
     final accessToken = await _getAccessToken();
 
     if (accessToken == null) {
+      print('ERROR: No access token');
       return false;
     }
+
+    print('Got Calendar access token');
 
     final event = {
       'summary': title,
@@ -51,6 +79,8 @@ class GoogleCalendarService {
       },
     };
 
+    print('Event JSON: ${jsonEncode(event)}');
+
     final response = await http.post(
       Uri.parse(
         'https://www.googleapis.com/calendar/v3/calendars/primary/events',
@@ -62,26 +92,35 @@ class GoogleCalendarService {
       body: jsonEncode(event),
     );
 
-    if (response.statusCode != 200 && response.statusCode != 201){
-      print('Calendar API Error: ${response.body}');
+    print('Calendar HTTP status: ${response.statusCode}');
+    print('Calendar response: ${response.body}');
+
+    if (response.statusCode == 200 ||
+        response.statusCode == 201) {
+      print('SUCCESS: Calendar event created');
+
+      final responseData = jsonDecode(response.body);
+
+      print('Event ID: ${responseData['id']}');
+      print('Event link: ${responseData['htmlLink']}');
+
+      return true;
     }
 
+    print('FAILED TO CREATE CALENDAR EVENT');
 
-    return response.statusCode == 200 ||
-        response.statusCode == 201;
+    return false;
   }
 
-  String? _formatDate(String input){
-    try{
+  String? _formatDate(String input) {
+    try {
       final date = DateTime.parse(input.trim());
+
       return date.toIso8601String().substring(0, 10);
-    }
-    catch (_){
+    } catch (_) {
       return null;
     }
   }
-
-
 
   String _nextDay(String dateString) {
     final date = DateTime.parse(dateString);
