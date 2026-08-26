@@ -7,6 +7,8 @@ class AppColors {
   static const Color lightYellow = Color(0xFFFFFFC5);
   static const Color darkGray = Color(0xFF4A4A4A);
   static const Color cascadingWhite = Color(0xFFF6F6F6);
+  static const Color taskRed = Color(0xFFFF4D4D);
+  static const Color taskGreen = Color(0xFF2ECC71);
 }
 
 class AppTheme {

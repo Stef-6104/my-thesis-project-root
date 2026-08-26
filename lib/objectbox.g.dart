@@ -24,7 +24,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(2, 5641021281272264174),
     name: 'MemoryItem',
-    lastPropertyId: const obx_int.IdUid(4, 5377254786351375286),
+    lastPropertyId: const obx_int.IdUid(6, 6859710917861938028),
     flags: 2,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -57,6 +57,18 @@ final _entities = <obx_int.ModelEntity>[
         relationField: 'category',
         relationTarget: 'Category',
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 4623009212677803563),
+        name: 'isArchived',
+        type: 1,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 6859710917861938028),
+        name: 'isDeleted',
+        type: 1,
+        flags: 0,
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
@@ -64,7 +76,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(3, 7082088160563669728),
     name: 'TodoTask',
-    lastPropertyId: const obx_int.IdUid(11, 786138042695107245),
+    lastPropertyId: const obx_int.IdUid(12, 4707995739058565827),
     flags: 2,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -131,6 +143,12 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(11, 786138042695107245),
         name: 'documentDate',
         type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 4707995739058565827),
+        name: 'dueDate',
+        type: 10,
         flags: 0,
       ),
     ],
@@ -249,11 +267,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
         object.id = id;
       },
       objectToFB: (MemoryItem object, fb.Builder fbb) {
-        fbb.startTable(5);
+        fbb.startTable(7);
         fbb.addInt64(0, object.id);
         fbb.addBool(1, object.memoryNum);
         fbb.addInt64(2, object.todoTask.targetId);
         fbb.addInt64(3, object.category.targetId);
+        fbb.addBool(4, object.isArchived);
+        fbb.addBool(5, object.isDeleted);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -267,6 +287,18 @@ obx_int.ModelDefinition getObjectBoxModel() {
             buffer,
             rootOffset,
             6,
+            false,
+          )
+          ..isArchived = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            12,
+            false,
+          )
+          ..isDeleted = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            14,
             false,
           );
         object.todoTask.targetId = const fb.Int64Reader().vTableGet(
@@ -313,7 +345,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final documentDateOffset = object.documentDate == null
             ? null
             : fbb.writeString(object.documentDate!);
-        fbb.startTable(12);
+        fbb.startTable(13);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, imageOffset);
         fbb.addOffset(2, taskTitleOffset);
@@ -325,12 +357,18 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(8, ocrTextOffset);
         fbb.addInt64(9, object.fileSizeBytes);
         fbb.addOffset(10, documentDateOffset);
+        fbb.addInt64(11, object.dueDate?.millisecondsSinceEpoch);
         fbb.finish(fbb.endTable());
         return object.id;
       },
       objectFromFB: (obx.Store store, ByteData fbData) {
         final buffer = fb.BufferContext(fbData);
         final rootOffset = buffer.derefObject(0);
+        final dueDateValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          26,
+        );
         final idParam = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -361,6 +399,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final taskDeadlineParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 18, '');
+        final dueDateParam = dueDateValue == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(dueDateValue);
         final fileSizeBytesParam = const fb.Int64Reader().vTableGetNullable(
           buffer,
           rootOffset,
@@ -381,6 +422,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           taskCompleted: taskCompletedParam,
           taskNote: taskNoteParam,
           taskDeadline: taskDeadlineParam,
+          dueDate: dueDateParam,
           fileSizeBytes: fileSizeBytesParam,
           ocrText: ocrTextParam,
           documentDate: documentDateParam,
@@ -470,6 +512,16 @@ class MemoryItem_ {
   static final category = obx.QueryRelationToOne<MemoryItem, Category>(
     _entities[0].properties[3],
   );
+
+  /// See [MemoryItem.isArchived].
+  static final isArchived = obx.QueryBooleanProperty<MemoryItem>(
+    _entities[0].properties[4],
+  );
+
+  /// See [MemoryItem.isDeleted].
+  static final isDeleted = obx.QueryBooleanProperty<MemoryItem>(
+    _entities[0].properties[5],
+  );
 }
 
 /// [TodoTask] entity fields to define ObjectBox queries.
@@ -527,6 +579,11 @@ class TodoTask_ {
   /// See [TodoTask.documentDate].
   static final documentDate = obx.QueryStringProperty<TodoTask>(
     _entities[1].properties[10],
+  );
+
+  /// See [TodoTask.dueDate].
+  static final dueDate = obx.QueryDateProperty<TodoTask>(
+    _entities[1].properties[11],
   );
 
   /// see [TodoTask.memoryItem]

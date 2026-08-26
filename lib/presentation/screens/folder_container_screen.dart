@@ -167,7 +167,7 @@ class _FolderContainerScreenState extends State<FolderContainerScreen> {
       ),
       body: StreamBuilder<List<MemoryItem>>(
         stream: widget.store.box<MemoryItem>()
-            .query(MemoryItem_.category.equals(widget.category.id))
+            .query(MemoryItem_.category.equals(widget.category.id).and(MemoryItem_.isDeleted.equals(false)))
             .watch(triggerImmediately: true)
             .map((q) => q.find()),
         builder: (context, snapshot) {
@@ -192,54 +192,41 @@ class _FolderContainerScreenState extends State<FolderContainerScreen> {
               final item = items[index];
               final isSelected = _selectedItemIds.contains(item.id);
 
-              return Stack(
-                children: [
-                  MemoryItemCard(
-                    item: item,
-                    onTap: () {
-                      if (_isSelectionMode) {
-                        setState(() {
-                          if (isSelected) {
-                            _selectedItemIds.remove(item.id);
-                            if (_selectedItemIds.isEmpty) _isSelectionMode = false;
-                          } else {
-                            _selectedItemIds.add(item.id);
-                          }
-                        });
+              return MemoryItemCard(
+                item: item,
+                isSelectionMode: _isSelectionMode,
+                isSelected: isSelected,
+                onTap: () {
+                  if (_isSelectionMode) {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedItemIds.remove(item.id);
+                        if (_selectedItemIds.isEmpty) _isSelectionMode = false;
                       } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => OverviewScreen(
-                              item: item,
-                              store: widget.store,
-                              isPreSave: false,
-                            ),
-                          ),
-                        );
+                        _selectedItemIds.add(item.id);
                       }
-                    },
-                    onLongPress: () {
-                      if (!_isSelectionMode) {
-                        setState(() {
-                          _isSelectionMode = true;
-                          _selectedItemIds.add(item.id);
-                        });
-                      }
-                    },
-                  ),
-                  if (_isSelectionMode)
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: IgnorePointer(
-                        child: Icon(
-                          isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-                          color: isSelected ? AppColors.lightYellow : Colors.white70,
+                    });
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OverviewScreen(
+                          item: item,
+                          store: widget.store,
+                          isPreSave: false,
                         ),
                       ),
-                    ),
-                ],
+                    );
+                  }
+                },
+                onLongPress: () {
+                  if (!_isSelectionMode) {
+                    setState(() {
+                      _isSelectionMode = true;
+                      _selectedItemIds.add(item.id);
+                    });
+                  }
+                },
               );
             },
           );

@@ -7,6 +7,8 @@ import 'package:objectbox/objectbox.dart';
 class MemoryItem {
   int id = 0;
   bool memoryNum = false;
+  bool isArchived = false;
+  bool isDeleted = false;
 
   //relationship to the todotask
   final todoTask = ToOne<TodoTask>();

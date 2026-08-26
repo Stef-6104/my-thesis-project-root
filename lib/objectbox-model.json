@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "2:5641021281272264174",
-      "lastPropertyId": "4:5377254786351375286",
+      "lastPropertyId": "6:6859710917861938028",
       "name": "MemoryItem",
       "flags": 2,
       "properties": [
@@ -35,13 +35,23 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "Category"
+        },
+        {
+          "id": "5:4623009212677803563",
+          "name": "isArchived",
+          "type": 1
+        },
+        {
+          "id": "6:6859710917861938028",
+          "name": "isDeleted",
+          "type": 1
         }
       ],
       "relations": []
     },
     {
       "id": "3:7082088160563669728",
-      "lastPropertyId": "11:786138042695107245",
+      "lastPropertyId": "12:4707995739058565827",
       "name": "TodoTask",
       "flags": 2,
       "properties": [
@@ -100,6 +110,11 @@
           "id": "11:786138042695107245",
           "name": "documentDate",
           "type": 9
+        },
+        {
+          "id": "12:4707995739058565827",
+          "name": "dueDate",
+          "type": 10
         }
       ],
       "relations": []

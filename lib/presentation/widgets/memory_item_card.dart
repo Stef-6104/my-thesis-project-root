@@ -7,12 +7,16 @@ class MemoryItemCard extends StatelessWidget {
   final MemoryItem item;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final bool isSelectionMode;
+  final bool isSelected;
 
   const MemoryItemCard({
     super.key,
     required this.item,
     required this.onTap,
     this.onLongPress,
+    this.isSelectionMode = false,
+    this.isSelected = false,
   });
 
   @override
@@ -25,7 +29,10 @@ class MemoryItemCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.darkGray,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.lightYellow, width: 1),
+          border: Border.all(
+            color: isSelected ? AppColors.taskGreen : AppColors.lightYellow,
+            width: isSelected ? 2 : 1,
+          ),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
@@ -68,6 +75,15 @@ class MemoryItemCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (isSelectionMode)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Icon(
+                    isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                    color: isSelected ? AppColors.taskGreen : Colors.white70,
+                  ),
+                ),
             ],
           ),
         ),

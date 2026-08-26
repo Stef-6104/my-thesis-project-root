@@ -15,6 +15,8 @@ class TodoTask {
   bool taskCompleted;
   String taskNote;
   String taskDeadline;
+  @Property(type: PropertyType.date)
+  DateTime? dueDate;
 
   String? ocrText;
   int? fileSizeBytes;
@@ -34,6 +36,7 @@ class TodoTask {
     this.taskCompleted = false,
     this.taskNote ="",
     this.taskDeadline ="",
+    this.dueDate,
     this.fileSizeBytes,
     this.ocrText,
     this.documentDate

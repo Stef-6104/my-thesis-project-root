@@ -5,6 +5,7 @@ import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
 import 'package:my_thesis_project/presentation/theme/app_theme.dart';
+import 'package:my_thesis_project/presentation/widgets/task_box_widget.dart';
 
 class OverviewScreen extends StatefulWidget {
   final MemoryItem item;
@@ -50,6 +51,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
     task.taskDescription = _bodyController.text;
     task.taskDeadline = _deadlineController.text;
     
+    widget.store.box<TodoTask>().put(task); // Ensure task is saved
     widget.store.box<MemoryItem>().put(widget.item);
     
     ScaffoldMessenger.of(context).showSnackBar(
@@ -58,18 +60,60 @@ class _OverviewScreenState extends State<OverviewScreen> {
     
     if (widget.isPreSave) {
       Navigator.of(context).popUntil((route) => route.isFirst);
+    } else {
+      setState(() {});
     }
+  }
+
+  void _archiveItem() {
+    setState(() {
+      widget.item.isArchived = true;
+      widget.store.box<MemoryItem>().put(widget.item);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Added to Archives")),
+    );
   }
 
   void _deleteItem() {
     if (!widget.isPreSave) {
-      final task = widget.item.todoTask.target;
-      if (task != null) {
-        widget.store.box<TodoTask>().remove(task.id);
-      }
-      widget.store.box<MemoryItem>().remove(widget.item.id);
+      widget.item.isDeleted = true;
+      widget.item.isArchived = false;
+      widget.store.box<MemoryItem>().put(widget.item);
     }
     Navigator.pop(context);
+  }
+
+  void _restoreItem() {
+    widget.item.isDeleted = false;
+    widget.store.box<MemoryItem>().put(widget.item);
+    Navigator.pop(context);
+  }
+
+  void _permanentlyDeleteItem() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.secondaryDark,
+        title: const Text("Permanently Delete?", style: TextStyle(color: Colors.white)),
+        content: const Text("This action cannot be undone.", style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () {
+              final task = widget.item.todoTask.target;
+              if (task != null) {
+                widget.store.box<TodoTask>().remove(task.id);
+              }
+              widget.store.box<MemoryItem>().remove(widget.item.id);
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Go back
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showCategoryDialog() {
@@ -135,11 +179,21 @@ class _OverviewScreenState extends State<OverviewScreen> {
         actions: [
           if (!widget.isPreSave)
             PopupMenuButton(
-              itemBuilder: (context) => [
-                const PopupMenuItem(value: 'delete', child: Text('Delete Item')),
-              ],
+              itemBuilder: (context) {
+                if (widget.item.isDeleted) {
+                  return [
+                    const PopupMenuItem(value: 'restore', child: Text('Restore')),
+                    const PopupMenuItem(value: 'perm_delete', child: Text('Permanently Delete', style: TextStyle(color: Colors.red))),
+                  ];
+                }
+                return [
+                  const PopupMenuItem(value: 'delete', child: Text('Delete Item')),
+                ];
+              },
               onSelected: (value) {
                 if (value == 'delete') _deleteItem();
+                if (value == 'restore') _restoreItem();
+                if (value == 'perm_delete') _permanentlyDeleteItem();
               },
             ),
         ],
@@ -244,35 +298,12 @@ class _OverviewScreenState extends State<OverviewScreen> {
             // Task Item Box
             const Text("Task:", style: TextStyle(color: AppColors.cascadingWhite)),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppColors.darkGray,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColors.lightYellow, width: 1),
+            if (task != null)
+              TaskBoxWidget(
+                task: task,
+                store: widget.store,
+                onTaskUpdated: () => setState(() {}),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.radio_button_unchecked, color: AppColors.cascadingWhite, size: 28),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _titleController.text,
-                          style: const TextStyle(color: AppColors.cascadingWhite, fontSize: 14, fontStyle: FontStyle.italic),
-                        ),
-                        Text(
-                          _deadlineController.text,
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
             const SizedBox(height: 30),
 
             if (widget.isPreSave) ...[
@@ -305,11 +336,11 @@ class _OverviewScreenState extends State<OverviewScreen> {
                   ),
                 ],
               ),
-            ] else ...[
+            ] else if (!widget.item.isDeleted) ...[
               const Text("Add:", style: TextStyle(color: AppColors.cascadingWhite)),
               const SizedBox(height: 10),
               _buildActionItem(Icons.add, "Add on a specific category", onTap: _showCategoryDialog),
-              _buildActionItem(Icons.grid_view, "Add on Archives"),
+              _buildActionItem(Icons.grid_view, "Add on Archives", onTap: _archiveItem),
               _buildActionItem(Icons.calendar_today, "Add as a calendar event", isStub: true),
             ],
           ],
