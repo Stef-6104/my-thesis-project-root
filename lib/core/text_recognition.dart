@@ -33,9 +33,19 @@ class _OCRScreenState extends State<OCRScreen> {
 
   final ImagePicker _picker = ImagePicker();
 
-  File? _image;
+  List<File> _images = [];
+
+  final TextEditingController _textController =
+  TextEditingController();
+
   String _recognizedText = '';
   bool _loading = false;
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
 
   Future<void> saveOCRToObjectBox({
     required File imageFile,
@@ -175,22 +185,26 @@ class _OCRScreenState extends State<OCRScreen> {
 
     if (file == null) return;
 
+    final imageFile = File(file.path);
+
     setState(() {
       _loading = true;
-      _image = File(file.path);
-      _recognizedText = '';
+      _images.add(imageFile);
     });
 
-    await _recognizeText(File(file.path));
-
-    setState(() {
-      _loading = false;
-    });
+    try {
+      await _recognizeText(imageFile);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
   }
 
   Future<void> _recognizeText(File imageFile) async {
     final inputImage = InputImage.fromFile(imageFile);
-
     final recognizer = TextRecognizer();
 
     try {
@@ -198,41 +212,90 @@ class _OCRScreenState extends State<OCRScreen> {
       await recognizer.processImage(inputImage);
 
       setState(() {
-        _recognizedText = result.text;
+        if (_textController.text.isEmpty) {
+          _textController.text = result.text;
+        } else {
+          _textController.text +=
+          '\n\n--- NEXT PAGE ---\n\n${result.text}';
+        }
+
+        _recognizedText = _textController.text;
       });
 
+      print("OCR from ${imageFile.path}:");
+      print(result.text);
+
+    } finally {
+      await recognizer.close();
+    }
+  }
+
+  Future<void> _processDocument() async {
+    if (_images.isEmpty || _recognizedText.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add at least one image.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      // Send ALL pages to Gemini at once
       final aiData = await extractStructuredData(
-        result.text,
+        _textController.text,
       );
 
       setState(() {
         _aiData = aiData;
       });
 
-      // PRINT THE RESULT HERE
       print("AI Result:");
       print(aiData);
 
-      print("Title: ${aiData["title"]}");
-      print("Date: ${aiData["date"]}");
-      print("Deadline: ${aiData["deadline"]}");
-      print("Body: ${aiData["body"]}");
-
+      // Use the first image as the primary image
+      // while keeping all pages available separately.
       await saveOCRToObjectBox(
-          imageFile: imageFile,
-          recognizedText: result.text,
-          aiData: aiData,
-          store: widget.store,
+        imageFile: _images.first,
+        recognizedText: _recognizedText,
+        aiData: aiData,
+        store: widget.store,
       );
 
+      // Save combined OCR JSON
       await saveOcrAsJson(
-        imageFile: imageFile,
-        recognizedText: result.text,
+        imageFile: _images.first,
+        recognizedText: _recognizedText,
         aiData: aiData,
       );
 
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Document processed successfully!'),
+          ),
+        );
+      }
+    } catch (e) {
+      print("Processing error: $e");
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error processing document: $e'),
+          ),
+        );
+      }
     } finally {
-      await recognizer.close();
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -288,10 +351,63 @@ class _OCRScreenState extends State<OCRScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            if (_image != null)
+            if (_images.isNotEmpty)
               Expanded(
                 flex: 2,
-                child: Image.file(_image!),
+                child: GridView.builder(
+                  itemCount: _images.length,
+                  gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(
+                              _images[index],
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+
+                        // Page number
+                        Positioned(
+                          top: 5,
+                          left: 5,
+                          child: CircleAvatar(
+                            radius: 14,
+                            child: Text(
+                              '${index + 1}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
+
+                        // Delete button
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _images.removeAt(index);
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
 
             const SizedBox(height: 12),
@@ -316,6 +432,21 @@ class _OCRScreenState extends State<OCRScreen> {
               ],
             ),
 
+            const SizedBox(height: 10),
+
+            if (_images.isNotEmpty)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.document_scanner),
+                  label: Text(
+                    'Process ${_images.length} Image'
+                        '${_images.length == 1 ? '' : 's'}',
+                  ),
+                  onPressed: _loading ? null : _processDocument,
+                ),
+              ),
+
             const SizedBox(height: 16),
 
             if (_loading)
@@ -330,12 +461,16 @@ class _OCRScreenState extends State<OCRScreen> {
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: SingleChildScrollView(
-                  child: Text(
-                    _recognizedText.isEmpty
-                        ? 'Recognized text will appear here'
-                        : _recognizedText,
+                child: TextField(
+                  controller: _textController,
+                  maxLines: null,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    hintText: 'Recognized text will appear here',
                   ),
+                  onChanged: (value) {
+                    _recognizedText = value;
+                  },
                 ),
               ),
             ),
