@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:my_thesis_project/data/models/category.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
@@ -71,6 +72,56 @@ class _OverviewScreenState extends State<OverviewScreen> {
     Navigator.pop(context);
   }
 
+  void _showCategoryDialog() {
+    final categories = widget.store.box<Category>().getAll();
+    int? selectedId = widget.item.category.target?.id;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.secondaryDark,
+          title: const Text('Assign Category', style: TextStyle(color: AppColors.cascadingWhite)),
+          content: categories.isEmpty
+              ? const Text("No categories created yet.", style: TextStyle(color: Colors.grey))
+              : SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: categories.map((cat) {
+                      return RadioListTile<int>(
+                        title: Text(cat.name, style: const TextStyle(color: AppColors.cascadingWhite)),
+                        value: cat.id,
+                        groupValue: selectedId,
+                        activeColor: AppColors.lightYellow,
+                        onChanged: (value) {
+                          setDialogState(() => selectedId = value);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            if (categories.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  final cat = widget.store.box<Category>().get(selectedId!);
+                  widget.item.category.target = cat;
+                  widget.store.box<MemoryItem>().put(widget.item);
+                  Navigator.pop(context);
+                  setState(() {}); // Refresh current screen
+                },
+                child: const Text('Save', style: TextStyle(color: AppColors.lightYellow)),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final task = widget.item.todoTask.target;
@@ -104,11 +155,11 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 height: 250,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.lightYellow, width: 2),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.lightYellow, width: 1),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(24),
                   child: Image.file(File(task.image), fit: BoxFit.cover),
                 ),
               ),
@@ -121,6 +172,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     width: double.infinity,
@@ -132,34 +184,55 @@ class _OverviewScreenState extends State<OverviewScreen> {
                         topRight: Radius.circular(24),
                       ),
                     ),
-                    child: TextField(
-                      controller: _titleController,
-                      enabled: widget.isPreSave,
-                      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-                      decoration: const InputDecoration(border: InputBorder.none),
-                    ),
+                    child: widget.isPreSave
+                      ? TextField(
+                          controller: _titleController,
+                          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+                          decoration: const InputDecoration(border: InputBorder.none),
+                        )
+                      : Text(
+                          _titleController.text,
+                          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+                        ),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(15),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextField(
-                          controller: _bodyController,
-                          enabled: widget.isPreSave,
-                          maxLines: null,
-                          style: const TextStyle(color: Colors.black),
-                          decoration: const InputDecoration(border: InputBorder.none),
-                        ),
+                        widget.isPreSave
+                          ? TextField(
+                              controller: _bodyController,
+                              maxLines: null,
+                              style: const TextStyle(color: Colors.black),
+                              decoration: const InputDecoration(border: InputBorder.none),
+                            )
+                          : Text(
+                              _bodyController.text,
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                        const SizedBox(height: 10),
                         const Divider(color: Colors.black26),
-                        TextField(
-                          controller: _deadlineController,
-                          enabled: widget.isPreSave,
-                          style: const TextStyle(color: Colors.black, fontSize: 12),
-                          decoration: const InputDecoration(
-                            prefixText: 'Deadline: ',
-                            border: InputBorder.none,
-                          ),
-                        ),
+                        const SizedBox(height: 5),
+                        widget.isPreSave
+                          ? TextField(
+                              controller: _deadlineController,
+                              style: const TextStyle(color: Colors.black, fontSize: 14, fontWeight: FontWeight.bold),
+                              decoration: const InputDecoration(
+                                prefixText: 'Deadline: ',
+                                prefixStyle: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                                border: InputBorder.none,
+                              ),
+                            )
+                          : RichText(
+                              text: TextSpan(
+                                style: const TextStyle(color: Colors.black, fontSize: 14),
+                                children: [
+                                  const TextSpan(text: 'Deadline: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  TextSpan(text: _deadlineController.text, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
                       ],
                     ),
                   ),
@@ -172,27 +245,27 @@ class _OverviewScreenState extends State<OverviewScreen> {
             const Text("Task:", style: TextStyle(color: AppColors.cascadingWhite)),
             const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(15),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: AppColors.darkGray,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.lightYellow),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: AppColors.lightYellow, width: 1),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.radio_button_unchecked, color: AppColors.cascadingWhite),
-                  const SizedBox(width: 12),
+                  const Icon(Icons.radio_button_unchecked, color: AppColors.cascadingWhite, size: 28),
+                  const SizedBox(width: 15),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           _titleController.text,
-                          style: const TextStyle(color: AppColors.cascadingWhite, fontSize: 12, fontStyle: FontStyle.italic),
+                          style: const TextStyle(color: AppColors.cascadingWhite, fontSize: 14, fontStyle: FontStyle.italic),
                         ),
                         Text(
                           _deadlineController.text,
-                          style: const TextStyle(color: Colors.grey, fontSize: 10),
+                          style: const TextStyle(color: Colors.grey, fontSize: 12),
                         ),
                       ],
                     ),
@@ -235,7 +308,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
             ] else ...[
               const Text("Add:", style: TextStyle(color: AppColors.cascadingWhite)),
               const SizedBox(height: 10),
-              _buildActionItem(Icons.add, "Add on a specific category"),
+              _buildActionItem(Icons.add, "Add on a specific category", onTap: _showCategoryDialog),
               _buildActionItem(Icons.grid_view, "Add on Archives"),
               _buildActionItem(Icons.calendar_today, "Add as a calendar event", isStub: true),
             ],
@@ -245,23 +318,29 @@ class _OverviewScreenState extends State<OverviewScreen> {
     );
   }
 
-  Widget _buildActionItem(IconData icon, String label, {bool isStub = false}) {
+  Widget _buildActionItem(IconData icon, String label, {bool isStub = false, VoidCallback? onTap}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(15),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.darkGray,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.lightYellow),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.lightYellow, width: 1),
       ),
       child: InkWell(
-        onTap: isStub ? () {} : () { /* TODO */ },
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.cascadingWhite),
-            const SizedBox(width: 15),
-            Text(label, style: const TextStyle(color: AppColors.cascadingWhite)),
-          ],
+        onTap: onTap ?? (isStub ? () {} : null),
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.cascadingWhite, size: 28),
+              const SizedBox(width: 18),
+              Text(
+                label,
+                style: const TextStyle(color: AppColors.cascadingWhite, fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
         ),
       ),
     );

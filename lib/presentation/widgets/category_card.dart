@@ -21,6 +21,7 @@ class CategoryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.darkGray,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.lightYellow.withOpacity(0.3), width: 1),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

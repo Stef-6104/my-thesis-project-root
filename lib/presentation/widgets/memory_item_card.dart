@@ -6,11 +6,13 @@ import 'package:my_thesis_project/presentation/theme/app_theme.dart';
 class MemoryItemCard extends StatelessWidget {
   final MemoryItem item;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const MemoryItemCard({
     super.key,
     required this.item,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -18,14 +20,15 @@ class MemoryItemCard extends StatelessWidget {
     final task = item.todoTask.target;
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.darkGray,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppColors.lightYellow, width: 1),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           child: Stack(
             fit: StackFit.expand,
             children: [

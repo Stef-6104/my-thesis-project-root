@@ -14,6 +14,7 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_sync_flutter_libs/objectbox_sync_flutter_libs.dart';
 
+import 'data/models/category.dart';
 import 'data/models/memory_item.dart';
 import 'data/models/todo_task.dart';
 
@@ -23,7 +24,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(2, 5641021281272264174),
     name: 'MemoryItem',
-    lastPropertyId: const obx_int.IdUid(3, 5782990194078271420),
+    lastPropertyId: const obx_int.IdUid(4, 5377254786351375286),
     flags: 2,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -47,6 +48,15 @@ final _entities = <obx_int.ModelEntity>[
         relationField: 'todoTask',
         relationTarget: 'TodoTask',
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 5377254786351375286),
+        name: 'categoryId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(3, 8618966026623007934),
+        relationField: 'category',
+        relationTarget: 'Category',
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
@@ -54,7 +64,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(3, 7082088160563669728),
     name: 'TodoTask',
-    lastPropertyId: const obx_int.IdUid(8, 683568028229824387),
+    lastPropertyId: const obx_int.IdUid(11, 786138042695107245),
     flags: 2,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -105,6 +115,24 @@ final _entities = <obx_int.ModelEntity>[
         type: 9,
         flags: 0,
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 3461581340498513425),
+        name: 'ocrText',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 6362204877436403163),
+        name: 'fileSizeBytes',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 786138042695107245),
+        name: 'documentDate',
+        type: 9,
+        flags: 0,
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[
@@ -112,6 +140,34 @@ final _entities = <obx_int.ModelEntity>[
         name: 'memoryItem',
         srcEntity: 'MemoryItem',
         srcField: 'todoTask',
+      ),
+    ],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(4, 4566774933147013718),
+    name: 'Category',
+    lastPropertyId: const obx_int.IdUid(2, 3754157729900130892),
+    flags: 2,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 8962667479747854135),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 3754157729900130892),
+        name: 'name',
+        type: 9,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[
+      obx_int.ModelBacklink(
+        name: 'memoryItems',
+        srcEntity: 'MemoryItem',
+        srcField: 'category',
       ),
     ],
   ),
@@ -160,8 +216,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
     // Typically, this is done with `dart run build_runner build`.
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(3, 7082088160563669728),
-    lastIndexId: const obx_int.IdUid(2, 3075244279789264285),
+    lastEntityId: const obx_int.IdUid(4, 4566774933147013718),
+    lastIndexId: const obx_int.IdUid(3, 8618966026623007934),
     lastRelationId: const obx_int.IdUid(0, 0),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [733585617409178034],
@@ -186,17 +242,18 @@ obx_int.ModelDefinition getObjectBoxModel() {
   final bindings = <Type, obx_int.EntityDefinition>{
     MemoryItem: obx_int.EntityDefinition<MemoryItem>(
       model: _entities[0],
-      toOneRelations: (MemoryItem object) => [object.todoTask],
+      toOneRelations: (MemoryItem object) => [object.todoTask, object.category],
       toManyRelations: (MemoryItem object) => {},
       getId: (MemoryItem object) => object.id,
       setId: (MemoryItem object, int id) {
         object.id = id;
       },
       objectToFB: (MemoryItem object, fb.Builder fbb) {
-        fbb.startTable(4);
+        fbb.startTable(5);
         fbb.addInt64(0, object.id);
         fbb.addBool(1, object.memoryNum);
         fbb.addInt64(2, object.todoTask.targetId);
+        fbb.addInt64(3, object.category.targetId);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -219,6 +276,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
           0,
         );
         object.todoTask.attach(store);
+        object.category.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          10,
+          0,
+        );
+        object.category.attach(store);
         return object;
       },
     ),
@@ -243,7 +307,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final taskCreatedOffset = fbb.writeString(object.taskCreated);
         final taskNoteOffset = fbb.writeString(object.taskNote);
         final taskDeadlineOffset = fbb.writeString(object.taskDeadline);
-        fbb.startTable(9);
+        final ocrTextOffset = object.ocrText == null
+            ? null
+            : fbb.writeString(object.ocrText!);
+        final documentDateOffset = object.documentDate == null
+            ? null
+            : fbb.writeString(object.documentDate!);
+        fbb.startTable(12);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, imageOffset);
         fbb.addOffset(2, taskTitleOffset);
@@ -252,6 +322,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addBool(5, object.taskCompleted);
         fbb.addOffset(6, taskNoteOffset);
         fbb.addOffset(7, taskDeadlineOffset);
+        fbb.addOffset(8, ocrTextOffset);
+        fbb.addInt64(9, object.fileSizeBytes);
+        fbb.addOffset(10, documentDateOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -288,6 +361,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final taskDeadlineParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 18, '');
+        final fileSizeBytesParam = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          22,
+        );
+        final ocrTextParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 20);
+        final documentDateParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 24);
         final object = TodoTask(
           id: idParam,
           image: imageParam,
@@ -297,6 +381,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
           taskCompleted: taskCompletedParam,
           taskNote: taskNoteParam,
           taskDeadline: taskDeadlineParam,
+          fileSizeBytes: fileSizeBytesParam,
+          ocrText: ocrTextParam,
+          documentDate: documentDateParam,
         );
         obx_int.InternalToManyAccess.setRelInfo<TodoTask>(
           object.memoryItem,
@@ -305,6 +392,53 @@ obx_int.ModelDefinition getObjectBoxModel() {
             3,
             object.id,
             (MemoryItem srcObject) => srcObject.todoTask,
+          ),
+        );
+        return object;
+      },
+    ),
+    Category: obx_int.EntityDefinition<Category>(
+      model: _entities[2],
+      toOneRelations: (Category object) => [],
+      toManyRelations: (Category object) => {
+        obx_int.RelInfo<MemoryItem>.toOneBacklink(
+          4,
+          object.id,
+          (MemoryItem srcObject) => srcObject.category,
+        ): object.memoryItems,
+      },
+      getId: (Category object) => object.id,
+      setId: (Category object, int id) {
+        object.id = id;
+      },
+      objectToFB: (Category object, fb.Builder fbb) {
+        final nameOffset = fbb.writeString(object.name);
+        fbb.startTable(3);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, nameOffset);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final nameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 6, '');
+        final object = Category(id: idParam, name: nameParam);
+        obx_int.InternalToManyAccess.setRelInfo<Category>(
+          object.memoryItems,
+          store,
+          obx_int.RelInfo<MemoryItem>.toOneBacklink(
+            4,
+            object.id,
+            (MemoryItem srcObject) => srcObject.category,
           ),
         );
         return object;
@@ -330,6 +464,11 @@ class MemoryItem_ {
   /// See [MemoryItem.todoTask].
   static final todoTask = obx.QueryRelationToOne<MemoryItem, TodoTask>(
     _entities[0].properties[2],
+  );
+
+  /// See [MemoryItem.category].
+  static final category = obx.QueryRelationToOne<MemoryItem, Category>(
+    _entities[0].properties[3],
   );
 }
 
@@ -375,8 +514,41 @@ class TodoTask_ {
     _entities[1].properties[7],
   );
 
+  /// See [TodoTask.ocrText].
+  static final ocrText = obx.QueryStringProperty<TodoTask>(
+    _entities[1].properties[8],
+  );
+
+  /// See [TodoTask.fileSizeBytes].
+  static final fileSizeBytes = obx.QueryIntegerProperty<TodoTask>(
+    _entities[1].properties[9],
+  );
+
+  /// See [TodoTask.documentDate].
+  static final documentDate = obx.QueryStringProperty<TodoTask>(
+    _entities[1].properties[10],
+  );
+
   /// see [TodoTask.memoryItem]
   static final memoryItem = obx.QueryBacklinkToMany<MemoryItem, TodoTask>(
     MemoryItem_.todoTask,
+  );
+}
+
+/// [Category] entity fields to define ObjectBox queries.
+class Category_ {
+  /// See [Category.id].
+  static final id = obx.QueryIntegerProperty<Category>(
+    _entities[2].properties[0],
+  );
+
+  /// See [Category.name].
+  static final name = obx.QueryStringProperty<Category>(
+    _entities[2].properties[1],
+  );
+
+  /// see [Category.memoryItems]
+  static final memoryItems = obx.QueryBacklinkToMany<MemoryItem, Category>(
+    MemoryItem_.category,
   );
 }

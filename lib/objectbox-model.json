@@ -5,7 +5,7 @@
   "entities": [
     {
       "id": "2:5641021281272264174",
-      "lastPropertyId": "3:5782990194078271420",
+      "lastPropertyId": "4:5377254786351375286",
       "name": "MemoryItem",
       "flags": 2,
       "properties": [
@@ -27,13 +27,21 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "TodoTask"
+        },
+        {
+          "id": "4:5377254786351375286",
+          "name": "categoryId",
+          "indexId": "3:8618966026623007934",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Category"
         }
       ],
       "relations": []
     },
     {
       "id": "3:7082088160563669728",
-      "lastPropertyId": "8:683568028229824387",
+      "lastPropertyId": "11:786138042695107245",
       "name": "TodoTask",
       "flags": 2,
       "properties": [
@@ -77,13 +85,48 @@
           "id": "8:683568028229824387",
           "name": "taskDeadline",
           "type": 9
+        },
+        {
+          "id": "9:3461581340498513425",
+          "name": "ocrText",
+          "type": 9
+        },
+        {
+          "id": "10:6362204877436403163",
+          "name": "fileSizeBytes",
+          "type": 6
+        },
+        {
+          "id": "11:786138042695107245",
+          "name": "documentDate",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "4:4566774933147013718",
+      "lastPropertyId": "2:3754157729900130892",
+      "name": "Category",
+      "flags": 2,
+      "properties": [
+        {
+          "id": "1:8962667479747854135",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3754157729900130892",
+          "name": "name",
+          "type": 9
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "3:7082088160563669728",
-  "lastIndexId": "2:3075244279789264285",
+  "lastEntityId": "4:4566774933147013718",
+  "lastIndexId": "3:8618966026623007934",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

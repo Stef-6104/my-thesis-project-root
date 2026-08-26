@@ -1,3 +1,4 @@
+import 'package:my_thesis_project/data/models/category.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:objectbox/objectbox.dart';
 
@@ -9,4 +10,7 @@ class MemoryItem {
 
   //relationship to the todotask
   final todoTask = ToOne<TodoTask>();
+
+  //relationship to category
+  final category = ToOne<Category>();
 }
