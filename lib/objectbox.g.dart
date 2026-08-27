@@ -54,7 +54,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(3, 7082088160563669728),
     name: 'TodoTask',
-    lastPropertyId: const obx_int.IdUid(8, 683568028229824387),
+    lastPropertyId: const obx_int.IdUid(12, 4242132119087631110),
     flags: 2,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -104,6 +104,32 @@ final _entities = <obx_int.ModelEntity>[
         name: 'taskDeadline',
         type: 9,
         flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 5880904946138499885),
+        name: 'ocrText',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 4254738970403588372),
+        name: 'fileSizeBytes',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 9152858038456054293),
+        name: 'documentDate',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 4242132119087631110),
+        name: 'textEmbedding',
+        type: 28,
+        flags: 8,
+        indexId: const obx_int.IdUid(3, 2920578436187358986),
+        hnswParams: obx_int.ModelHnswParams(dimensions: 768),
       ),
     ],
     relations: <obx_int.ModelRelation>[],
@@ -161,7 +187,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
     lastEntityId: const obx_int.IdUid(3, 7082088160563669728),
-    lastIndexId: const obx_int.IdUid(2, 3075244279789264285),
+    lastIndexId: const obx_int.IdUid(3, 2920578436187358986),
     lastRelationId: const obx_int.IdUid(0, 0),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [733585617409178034],
@@ -243,7 +269,16 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final taskCreatedOffset = fbb.writeString(object.taskCreated);
         final taskNoteOffset = fbb.writeString(object.taskNote);
         final taskDeadlineOffset = fbb.writeString(object.taskDeadline);
-        fbb.startTable(9);
+        final ocrTextOffset = object.ocrText == null
+            ? null
+            : fbb.writeString(object.ocrText!);
+        final documentDateOffset = object.documentDate == null
+            ? null
+            : fbb.writeString(object.documentDate!);
+        final textEmbeddingOffset = object.textEmbedding == null
+            ? null
+            : fbb.writeListFloat32(object.textEmbedding!);
+        fbb.startTable(13);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, imageOffset);
         fbb.addOffset(2, taskTitleOffset);
@@ -252,6 +287,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addBool(5, object.taskCompleted);
         fbb.addOffset(6, taskNoteOffset);
         fbb.addOffset(7, taskDeadlineOffset);
+        fbb.addOffset(8, ocrTextOffset);
+        fbb.addInt64(9, object.fileSizeBytes);
+        fbb.addOffset(10, documentDateOffset);
+        fbb.addOffset(11, textEmbeddingOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -288,16 +327,35 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final taskDeadlineParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 18, '');
-        final object = TodoTask(
-          id: idParam,
-          image: imageParam,
-          taskTitle: taskTitleParam,
-          taskDescription: taskDescriptionParam,
-          taskCreated: taskCreatedParam,
-          taskCompleted: taskCompletedParam,
-          taskNote: taskNoteParam,
-          taskDeadline: taskDeadlineParam,
+        final fileSizeBytesParam = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          22,
         );
+        final ocrTextParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 20);
+        final documentDateParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 24);
+        final object =
+            TodoTask(
+                id: idParam,
+                image: imageParam,
+                taskTitle: taskTitleParam,
+                taskDescription: taskDescriptionParam,
+                taskCreated: taskCreatedParam,
+                taskCompleted: taskCompletedParam,
+                taskNote: taskNoteParam,
+                taskDeadline: taskDeadlineParam,
+                fileSizeBytes: fileSizeBytesParam,
+                ocrText: ocrTextParam,
+                documentDate: documentDateParam,
+              )
+              ..textEmbedding = const fb.ListReader<double>(
+                fb.Float32Reader(),
+                lazy: false,
+              ).vTableGetNullable(buffer, rootOffset, 26);
         obx_int.InternalToManyAccess.setRelInfo<TodoTask>(
           object.memoryItem,
           store,
@@ -373,6 +431,26 @@ class TodoTask_ {
   /// See [TodoTask.taskDeadline].
   static final taskDeadline = obx.QueryStringProperty<TodoTask>(
     _entities[1].properties[7],
+  );
+
+  /// See [TodoTask.ocrText].
+  static final ocrText = obx.QueryStringProperty<TodoTask>(
+    _entities[1].properties[8],
+  );
+
+  /// See [TodoTask.fileSizeBytes].
+  static final fileSizeBytes = obx.QueryIntegerProperty<TodoTask>(
+    _entities[1].properties[9],
+  );
+
+  /// See [TodoTask.documentDate].
+  static final documentDate = obx.QueryStringProperty<TodoTask>(
+    _entities[1].properties[10],
+  );
+
+  /// See [TodoTask.textEmbedding].
+  static final textEmbedding = obx.QueryHnswProperty<TodoTask>(
+    _entities[1].properties[11],
   );
 
   /// see [TodoTask.memoryItem]

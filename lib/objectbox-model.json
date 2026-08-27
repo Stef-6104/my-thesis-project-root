@@ -33,7 +33,7 @@
     },
     {
       "id": "3:7082088160563669728",
-      "lastPropertyId": "8:683568028229824387",
+      "lastPropertyId": "12:4242132119087631110",
       "name": "TodoTask",
       "flags": 2,
       "properties": [
@@ -77,13 +77,35 @@
           "id": "8:683568028229824387",
           "name": "taskDeadline",
           "type": 9
+        },
+        {
+          "id": "9:5880904946138499885",
+          "name": "ocrText",
+          "type": 9
+        },
+        {
+          "id": "10:4254738970403588372",
+          "name": "fileSizeBytes",
+          "type": 6
+        },
+        {
+          "id": "11:9152858038456054293",
+          "name": "documentDate",
+          "type": 9
+        },
+        {
+          "id": "12:4242132119087631110",
+          "name": "textEmbedding",
+          "indexId": "3:2920578436187358986",
+          "type": 28,
+          "flags": 8
         }
       ],
       "relations": []
     }
   ],
   "lastEntityId": "3:7082088160563669728",
-  "lastIndexId": "2:3075244279789264285",
+  "lastIndexId": "3:2920578436187358986",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

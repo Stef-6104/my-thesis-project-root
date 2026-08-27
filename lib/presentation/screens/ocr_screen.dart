@@ -9,6 +9,7 @@ import 'package:firebase_ai/firebase_ai.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
+import 'package:my_thesis_project/services/ai_service.dart';
 
 class OCRScreen extends StatefulWidget {
   final Store store;
@@ -66,6 +67,8 @@ class _OCRScreenState extends State<OCRScreen> {
     try {
       final RecognizedText result = await recognizer.processImage(inputImage);
       final aiData = await extractStructuredData(result.text);
+      final aiService = AIService();
+      final fullText = "${aiData['title']} ${aiData['body']}";
 
       final newTask = TodoTask(
         image: file.path,
@@ -74,6 +77,7 @@ class _OCRScreenState extends State<OCRScreen> {
         taskCreated: DateTime.now().toIso8601String(),
         taskDeadline: aiData['deadline'] ?? '',
         ocrText: result.text,
+        textEmbedding: vector,
       );
 
       final memoryItem = MemoryItem();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
+import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
 import 'package:my_thesis_project/presentation/screens/ocr_screen.dart';
 import 'package:my_thesis_project/presentation/screens/overview_screen.dart';
@@ -7,6 +8,7 @@ import 'package:my_thesis_project/presentation/theme/app_theme.dart';
 import 'package:my_thesis_project/presentation/widgets/category_card.dart';
 import 'package:my_thesis_project/presentation/widgets/memory_item_card.dart';
 import 'package:my_thesis_project/presentation/widgets/search_bar.dart';
+import 'package:my_thesis_project/services/ai_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Store store;
@@ -17,10 +19,47 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  String? _aiSummary;
+  final AIService _aiService = AIService();
   late final Box<MemoryItem> _memoryBox;
   late Stream<List<MemoryItem>> _memoryStream;
   String _searchQuery = '';
   int _selectedIndex = 0;
+
+  void _performRAGSearch(String query) async {
+    if (query.isEmpty) {
+      setState(() => _aiSummary = null);
+      return;
+    }
+
+    // R: Retrieval using Vector Search
+    final queryVector = await _aiService.getEmbedding(query);
+    final taskBox = widget.store.box<TodoTask>();
+
+    // Fixed: Use '.near()' for semantic similarity search
+    final queryBuilder = taskBox.query(
+        TodoTask_.textEmbedding.nearestNeighborsF32(queryVector, 3)
+    ).build();
+
+    final matchedTasks = queryBuilder.find();
+
+    if (matchedTasks.isEmpty) {
+      setState(() => _aiSummary = "No related scans found.");
+      return;
+    }
+
+    // A: Augmentation
+    String context = matchedTasks
+        .map((t) => "${t.taskTitle}: ${t.taskDescription}")
+        .join("\n");
+
+    // G: Generation
+    final summary = await _aiService.generateRAGResponse(query, context);
+
+    setState(() {
+      _aiSummary = summary;
+    });
+  }
 
   @override
   void initState() {
@@ -56,7 +95,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: AppColors.cascadingWhite,
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Courier', // For that typewriter look in the screenshot
+                      fontFamily: 'Courier',
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -65,27 +104,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       setState(() {
                         _searchQuery = value.toLowerCase();
                       });
+                      // Optional: Trigger AI search if user types a question
+                      if (value.endsWith('?')) {
+                        _performRAGSearch(value);
+                      }
                     },
                   ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Category:',
-                        style: TextStyle(color: AppColors.cascadingWhite, fontSize: 18),
+                  // Moved: AI Insight now displays correctly in the build method
+                  if (_aiSummary != null) ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondaryDark,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.lightYellow),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add, color: AppColors.cascadingWhite),
-                        onPressed: () {
-                          // TODO: Folder creation
-                        },
+                      child: Text(
+                        "AI Insight: $_aiSummary",
+                        style: const TextStyle(
+                            color: Colors.white, fontStyle: FontStyle.italic),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ],
               ),
             ),
+            // ... rest of your UI (Categories, GridView, etc.)
             Container(
               height: 160,
               padding: const EdgeInsets.only(left: 20),
@@ -119,7 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     );
                   }
-                  
+
                   final items = snapshot.data!.where((item) {
                     final title = item.todoTask.target?.taskTitle.toLowerCase() ?? '';
                     return title.contains(_searchQuery);
@@ -158,6 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+      // ... (Bottom Navigation Bar and FAB as they were)
       bottomNavigationBar: Container(
         height: 80,
         decoration: const BoxDecoration(

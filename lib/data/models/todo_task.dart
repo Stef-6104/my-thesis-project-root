@@ -19,6 +19,10 @@ class TodoTask {
   String? ocrText;
   int? fileSizeBytes;
   String? documentDate;
+  @HnswIndex(dimensions: 768)
+  @Property(type: PropertyType.floatVector)
+  List<double>? textEmbedding;
+
 
 
   //relationship to the each memory item
