@@ -6,6 +6,7 @@ import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
 import 'package:my_thesis_project/presentation/theme/app_theme.dart';
 import 'package:my_thesis_project/presentation/widgets/task_box_widget.dart';
+import 'package:my_thesis_project/services/google_calendar_service.dart';
 
 class OverviewScreen extends StatefulWidget {
   final MemoryItem item;
@@ -24,9 +25,78 @@ class OverviewScreen extends StatefulWidget {
 }
 
 class _OverviewScreenState extends State<OverviewScreen> {
+  final GoogleCalendarService _calendarService = GoogleCalendarService();
   late TextEditingController _titleController;
   late TextEditingController _bodyController;
   late TextEditingController _deadlineController;
+
+  Future<void> _addToGoogleCalendar() async {
+    final task = widget.item.todoTask.target;
+
+    if (task == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No task found.'),
+        ),
+      );
+      return;
+    }
+
+    if (task.taskDeadline == null ||
+        task.taskDeadline!.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This task has no deadline.'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Parse the deadline stored in your TodoTask
+      final deadline = DateTime.tryParse(
+        task.taskDeadline!.trim(),
+      );
+
+      if (deadline == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Invalid deadline format: ${task.taskDeadline}',
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Create the Google Calendar event
+      await _calendarService.createCalendarEvent(
+        title: task.taskTitle ?? 'Untitled Task',
+        description: task.taskDescription ?? '',
+        deadline: deadline,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Added to Google Calendar!',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not add to Google Calendar: $e',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -341,7 +411,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
               const SizedBox(height: 10),
               _buildActionItem(Icons.add, "Add on a specific category", onTap: _showCategoryDialog),
               _buildActionItem(Icons.grid_view, "Add on Archives", onTap: _archiveItem),
-              _buildActionItem(Icons.calendar_today, "Add as a calendar event", isStub: true),
+              _buildActionItem(Icons.calendar_today, "Add as a calendar event", onTap: _addToGoogleCalendar,),
             ],
           ],
         ),

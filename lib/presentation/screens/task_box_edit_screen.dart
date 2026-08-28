@@ -39,9 +39,11 @@ class _TaskBoxEditScreenState extends State<TaskBoxEditScreen> {
   }
 
   Future<void> _pickDate() async {
+    final DateTime now = DateTime.now();
+
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
+      initialDate: _selectedDate ?? now,
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
       builder: (context, child) {
@@ -58,23 +60,27 @@ class _TaskBoxEditScreenState extends State<TaskBoxEditScreen> {
         );
       },
     );
-    if (picked != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(_selectedDate ?? DateTime.now()),
+
+    if (picked == null) return;
+
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: _selectedDate != null
+          ? TimeOfDay.fromDateTime(_selectedDate!)
+          : TimeOfDay.now(),
+    );
+
+    if (pickedTime == null) return;
+
+    setState(() {
+      _selectedDate = DateTime(
+        picked.year,
+        picked.month,
+        picked.day,
+        pickedTime.hour,
+        pickedTime.minute,
       );
-      if (pickedTime != null) {
-        setState(() {
-          _selectedDate = DateTime(
-            picked.year,
-            picked.month,
-            picked.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-        });
-      }
-    }
+    });
   }
 
   void _save() {
@@ -82,7 +88,7 @@ class _TaskBoxEditScreenState extends State<TaskBoxEditScreen> {
     widget.task.taskNote = _noteController.text;
     widget.task.dueDate = _selectedDate;
     if (_selectedDate != null) {
-      widget.task.taskDeadline = DateFormat('MMMM d, h:mm a').format(_selectedDate!);
+      widget.task.taskDeadline = _selectedDate!.toIso8601String();
     }
     widget.store.box<TodoTask>().put(widget.task);
     Navigator.pop(context);
