@@ -25,32 +25,66 @@ class _OCRScreenState extends State<OCRScreen> {
   Future<Map<String, dynamic>> extractStructuredData(String ocrText) async {
     final model = FirebaseAI.googleAI().generativeModel(
       model: 'gemini-2.5-flash',
+      generationConfig: GenerationConfig(
+        responseMimeType: 'application/json',
+        temperature: 0.2,
+      ),
     );
 
-    final response = await model.generateContent([
-      Content.text('''
-        Analyze the following OCR text and extract structured information.
-        
-        Return ONLY valid JSON with these fields:
-        {
-          "title": "...",
-          "date": "...",
-          "deadline": "...",
-          "body": "..."
-        }
-        
-        OCR TEXT:
-        $ocrText
-        ''')
-    ]);
+    final prompt = '''
+You are an intelligent multimodal parser and summarizer for a productivity and memory management app.
+Analyze the following unstructured OCR text extracted from an image or screenshot.
 
-    final text = response.text ?? '{}';
-    final cleanedText = text.replaceAll('```json', '').replaceAll('```', '').trim();
+Extract and synthesize the information into the following structured JSON format:
+
+{
+  "title": "A concise, clear document/event/task title (max 6-8 words)",
+  "summary": [
+    "Key takeaway or description bullet point 1",
+    "Key takeaway or description bullet point 2",
+    "Key takeaway or description bullet point 3"
+  ],
+  "deadline": "Formatted deadline or event timestamp (e.g. MM/DD/YYYY, HH:MM AM/PM or YYYY-MM-DD HH:mm). If none exists, return null.",
+  "task": {
+    "title": "Actionable task name",
+    "due_date_time": "ISO-8601 string (YYYY-MM-DDTHH:mm:ss) or readable format if a due date/time is mentioned, otherwise null"
+  }
+}
+
+CRITICAL RULES:
+1. DO NOT copy-paste the entire raw OCR paragraph into the summary. Synthesize the text into 2 to 4 concise, high-value bullet points.
+2. Search aggressively for dates, deadlines, assembly times, and submission cutoffs. Convert relative dates or explicit dates into clean, standardized formats.
+3. If no deadline exists, return null for "deadline".
+4. Return ONLY valid, parseable JSON matching the schema above.
+
+OCR TEXT:
+$ocrText
+''';
 
     try {
-      return jsonDecode(cleanedText);
+      final response = await model.generateContent([Content.text(prompt)]);
+      final rawText = response.text?.trim() ?? '{}';
+
+      String cleanedJson = rawText;
+      if (cleanedJson.startsWith('```json')) {
+        cleanedJson = cleanedJson.replaceFirst('```json', '');
+      }
+      if (cleanedJson.startsWith('```')) {
+        cleanedJson = cleanedJson.replaceFirst('```', '');
+      }
+      if (cleanedJson.endsWith('```')) {
+        cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
+      }
+      cleanedJson = cleanedJson.trim();
+
+      return jsonDecode(cleanedJson);
     } catch (e) {
-      return {"title": "Scan Result", "body": ocrText};
+      return {
+        "title": "Scan Result",
+        "summary": ["Failed to parse structured summary."],
+        "deadline": null,
+        "task": null,
+      };
     }
   }
 
@@ -67,13 +101,25 @@ class _OCRScreenState extends State<OCRScreen> {
       final RecognizedText result = await recognizer.processImage(inputImage);
       final aiData = await extractStructuredData(result.text);
 
+      // 1. Prepare bulleted summary
+      final List<dynamic> summaryList = aiData['summary'] ?? [];
+      final String summaryText = summaryList.map((e) => '• $e').join('\n');
+
+      // 2. Parse due_date_time
+      DateTime? dueDate;
+      final taskData = aiData['task'];
+      if (taskData != null && taskData['due_date_time'] != null) {
+        dueDate = DateTime.tryParse(taskData['due_date_time'].toString());
+      }
+
       final newTask = TodoTask(
         image: file.path,
         taskTitle: aiData['title'] ?? 'Untitled Scan',
-        taskDescription: aiData['body'] ?? '',
+        taskDescription: summaryText,
         taskCreated: DateTime.now().toIso8601String(),
         taskDeadline: aiData['deadline'] ?? '',
         ocrText: result.text,
+        dueDate: dueDate,
       );
 
       final memoryItem = MemoryItem();
