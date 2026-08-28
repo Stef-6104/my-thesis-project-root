@@ -7,6 +7,7 @@ import 'package:my_thesis_project/objectbox.g.dart';
 import 'package:my_thesis_project/presentation/theme/app_theme.dart';
 import 'package:my_thesis_project/presentation/widgets/task_box_widget.dart';
 import 'package:my_thesis_project/services/google_calendar_service.dart';
+import 'package:my_thesis_project/presentation/screens/search_screen.dart';
 
 class OverviewScreen extends StatefulWidget {
   final MemoryItem item;
@@ -55,7 +56,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
     try {
       // Parse the deadline stored in your TodoTask
       final deadline = DateTime.tryParse(
-        task.taskDeadline!.trim(),
+        task.taskDeadline.trim(),
       );
 
       if (deadline == null) {
@@ -120,8 +121,25 @@ class _OverviewScreenState extends State<OverviewScreen> {
     task.taskTitle = _titleController.text;
     task.taskDescription = _bodyController.text;
     task.taskDeadline = _deadlineController.text;
-    
-    widget.store.box<TodoTask>().put(task); // Ensure task is saved
+
+    widget.store.box<TodoTask>().put(task);
+
+    print('===== OBJECTBOX SAVE =====');
+    print('Task ID: ${task.id}');
+    print('Embedding exists: ${task.embedding != null}');
+    print('Embedding length: ${task.embedding?.length}');
+
+    widget.store.box<MemoryItem>().put(widget.item);
+
+// Read it back from ObjectBox
+    final savedTask = widget.store.box<TodoTask>().get(task.id);
+
+    print('===== OBJECTBOX READ BACK =====');
+    print('Saved task ID: ${savedTask?.id}');
+    print('Embedding exists after read: ${savedTask?.embedding != null}');
+    print('Embedding length after read: ${savedTask?.embedding?.length}');
+
+
     widget.store.box<MemoryItem>().put(widget.item);
     
     ScaffoldMessenger.of(context).showSnackBar(

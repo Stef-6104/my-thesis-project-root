@@ -7,6 +7,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_app_check
   firebase_auth
   firebase_core
+  flutter_gemma
   objectbox_sync_flutter_libs
 )
 

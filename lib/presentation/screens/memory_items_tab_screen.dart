@@ -5,6 +5,7 @@ import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
 import 'package:my_thesis_project/presentation/theme/app_theme.dart';
 import 'package:my_thesis_project/presentation/widgets/task_box_widget.dart';
+import 'package:my_thesis_project/presentation/screens/search_screen.dart';
 
 enum TaskFilter { pending, overdue, completed }
 

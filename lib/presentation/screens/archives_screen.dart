@@ -4,6 +4,7 @@ import 'package:my_thesis_project/objectbox.g.dart';
 import 'package:my_thesis_project/presentation/screens/overview_screen.dart';
 import 'package:my_thesis_project/presentation/theme/app_theme.dart';
 import 'package:my_thesis_project/presentation/widgets/memory_item_card.dart';
+import 'package:my_thesis_project/presentation/screens/search_screen.dart';
 
 class ArchivesScreen extends StatefulWidget {
   final Store store;

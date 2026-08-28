@@ -9,6 +9,8 @@ import 'package:firebase_ai/firebase_ai.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
+import 'package:my_thesis_project/services/embedding_service.dart';
+import 'package:my_thesis_project/presentation/screens/search_screen.dart';
 
 class OCRScreen extends StatefulWidget {
   final Store store;
@@ -20,6 +22,7 @@ class OCRScreen extends StatefulWidget {
 
 class _OCRScreenState extends State<OCRScreen> {
   final ImagePicker _picker = ImagePicker();
+  final EmbeddingService _embeddingService = EmbeddingService();
   bool _loading = false;
 
   Future<Map<String, dynamic>> extractStructuredData(String ocrText) async {
@@ -67,6 +70,27 @@ class _OCRScreenState extends State<OCRScreen> {
       final RecognizedText result = await recognizer.processImage(inputImage);
       final aiData = await extractStructuredData(result.text);
 
+      // Generate EmbeddingGemma vector
+      final embeddingService = EmbeddingService();
+
+      // Generate embedding from the extracted document information
+      final textForEmbedding = '''
+        Title: ${aiData['title'] ?? 'Untitled Scan'}
+        Body: ${aiData['body'] ?? ''}
+        Date: ${aiData['date'] ?? ''}
+        Deadline: ${aiData['deadline'] ?? ''}
+        OCR Text: ${result.text}
+      ''';
+
+      final embedding =
+      await _embeddingService.generateDocumentEmbedding(
+        textForEmbedding,
+      );
+
+      print('===== EMBEDDING GENERATED =====');
+      print('Embedding length: ${embedding.length}');
+      print('Embedding generated: ${embedding.length} dimensions');
+
       final newTask = TodoTask(
         image: file.path,
         taskTitle: aiData['title'] ?? 'Untitled Scan',
@@ -74,7 +98,10 @@ class _OCRScreenState extends State<OCRScreen> {
         taskCreated: DateTime.now().toIso8601String(),
         taskDeadline: aiData['deadline'] ?? '',
         ocrText: result.text,
+        embedding: embedding,
       );
+
+      await embeddingService.dispose();
 
       final memoryItem = MemoryItem();
       memoryItem.todoTask.target = newTask;
@@ -95,6 +122,12 @@ class _OCRScreenState extends State<OCRScreen> {
       await recognizer.close();
       setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _embeddingService.dispose();
+    super.dispose();
   }
 
   @override

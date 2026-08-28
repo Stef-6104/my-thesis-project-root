@@ -8,6 +8,13 @@ import 'package:objectbox/objectbox.dart';
 import 'objectbox.g.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:my_thesis_project/services/test_embedding.dart';
+import 'package:flutter_gemma/flutter_gemma.dart';
+import 'package:flutter_gemma_litertlm/flutter_gemma_litertlm.dart';
+
+import 'services/test_embedding.dart';
+import 'package:my_thesis_project/services/test_semantic_search.dart';
+import 'secrets.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +23,16 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  await FlutterGemma.initialize(
+    huggingFaceToken: huggingFaceToken,
+    embeddingBackends: [const LiteRtEmbeddingBackend()],
+  );
+
+  await testEmbedding();
+
   final store = await openStore();
+
+  await testSemanticSearch(store);
 
   runApp(MyApp(store: store));
 }

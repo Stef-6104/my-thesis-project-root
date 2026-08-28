@@ -12,6 +12,8 @@ import 'package:my_thesis_project/presentation/theme/app_theme.dart';
 import 'package:my_thesis_project/presentation/widgets/category_card.dart';
 import 'package:my_thesis_project/presentation/widgets/memory_item_card.dart';
 import 'package:my_thesis_project/presentation/widgets/search_bar.dart';
+import 'package:my_thesis_project/services/embedding_service.dart';
+import 'package:my_thesis_project/services/semantic_search_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Store store;
@@ -24,6 +26,14 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   late final Box<MemoryItem> _memoryBox;
   late final Box<Category> _categoryBox;
+
+  late final EmbeddingService _embeddingService;
+  late final SemanticSearchService _semanticSearchService;
+
+  List<SemanticSearchResult> _semanticResults = [];
+
+  bool _semanticSearching = false;
+
   late Stream<List<MemoryItem>> _memoryStream;
   late Stream<List<Category>> _categoryStream;
   String _searchQuery = '';
@@ -34,7 +44,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _memoryBox = widget.store.box<MemoryItem>();
     _categoryBox = widget.store.box<Category>();
-    
+
+    _embeddingService = EmbeddingService();
+
+    _semanticSearchService = SemanticSearchService(
+      store: widget.store,
+      embeddingService: _embeddingService,
+    );
+
     _memoryStream = _memoryBox
         .query(MemoryItem_.isDeleted.equals(false))
         .watch(triggerImmediately: true)
@@ -55,6 +72,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  Future<void> _performSemanticSearch(String query) async {
+    query = query.trim();
+
+    if (query.isEmpty) {
+      setState(() {
+        _searchQuery = '';
+        _semanticResults = [];
+        _semanticSearching = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _searchQuery = query;
+      _semanticSearching = true;
+    });
+
+    try {
+      final results = await _semanticSearchService.search(
+        query,
+        limit: 20,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _semanticResults = results;
+        _semanticSearching = false;
+      });
+    } catch (e) {
+      print('Semantic search error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _semanticResults = [];
+        _semanticSearching = false;
+      });
+    }
   }
 
   void _navigateToOcrScreen() {
@@ -206,9 +264,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(height: 15),
                 CustomSearchBar(
                   onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value.toLowerCase();
-                    });
+                    _performSemanticSearch(value);
                   },
                 ),
                 const SizedBox(height: 15),
@@ -300,10 +356,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   );
                 }
 
-                final items = snapshot.data!.where((item) {
-                  final title = item.todoTask.target?.taskTitle.toLowerCase() ?? '';
-                  return title.contains(_searchQuery);
-                }).toList();
+                final allItems = snapshot.data!;
+
+                final List<MemoryItem> items;
+
+                if (_searchQuery.trim().isEmpty) {
+                  items = allItems;
+                } else {
+                  items = _semanticResults
+                      .map((result) {
+                    final taskId = result.task.id;
+
+                    return allItems.cast<MemoryItem?>().firstWhere(
+                          (item) => item?.todoTask.target?.id == taskId,
+                      orElse: () => null,
+                    );
+                  })
+                      .whereType<MemoryItem>()
+                      .toList();
+                }
+
+                if (_semanticSearching) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.lightYellow,
+                    ),
+                  );
+                }
 
                 return GridView.builder(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
@@ -338,6 +417,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _embeddingService.dispose();
+    super.dispose();
   }
 
   @override

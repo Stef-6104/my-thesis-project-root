@@ -22,6 +22,9 @@ class TodoTask {
   int? fileSizeBytes;
   String? documentDate;
 
+  @Property(type: PropertyType.floatVector)
+  List<double>? embedding;
+
 
   //relationship to the each memory item
   @Backlink('todoTask')
@@ -39,6 +42,7 @@ class TodoTask {
     this.dueDate,
     this.fileSizeBytes,
     this.ocrText,
-    this.documentDate
+    this.documentDate,
+    this.embedding,
 });
 }

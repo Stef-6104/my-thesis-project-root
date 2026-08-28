@@ -14,10 +14,12 @@ import 'package:my_thesis_project/firebase_options.dart';
 import 'package:my_thesis_project/data/models/todo_task.dart';
 import 'package:my_thesis_project/data/models/memory_item.dart';
 import 'package:my_thesis_project/objectbox.g.dart';
+import 'package:my_thesis_project/services/embedding_service.dart';
 
 class OCRScreen extends StatefulWidget {
   final Store store;
   const OCRScreen({super.key, required this.store});
+
 
   @override
   State<OCRScreen> createState() => _OCRScreenState();
@@ -25,6 +27,7 @@ class OCRScreen extends StatefulWidget {
 
 class _OCRScreenState extends State<OCRScreen> {
 
+  final EmbeddingService _embeddingService = EmbeddingService();
 
   final ImagePicker _picker = ImagePicker();
 
@@ -38,27 +41,51 @@ class _OCRScreenState extends State<OCRScreen> {
     required Map<String, dynamic> aiData,
     required Store store,
   }) async {
-    //1. Create Task from JSON
+    // 1. Prepare the text for EmbeddingGemma
+    final textForEmbedding = '''
+Title: ${aiData['title'] ?? 'Untitled Scan'}
+Body: ${aiData['body'] ?? ''}
+Date: ${aiData['date'] ?? ''}
+Deadline: ${aiData['deadline'] ?? ''}
+OCR Text: $recognizedText
+''';
+
+    // 2. Generate the 768-dimensional embedding
+    final embedding =
+    await _embeddingService.generateDocumentEmbedding(
+      textForEmbedding,
+    );
+
+    print('Generated embedding length: ${embedding.length}');
+
+    // 3. Create the TodoTask
     final newTask = TodoTask(
       image: imageFile.path,
       taskTitle: aiData['title'] ?? 'Untitled Scan',
-      taskDescription: aiData ['body'] ?? '',
+      taskDescription: aiData['body'] ?? '',
       taskCreated: DateTime.now().toIso8601String(),
       taskDeadline: aiData['deadline'] ?? '',
       taskNote: 'Generated via OCR',
       ocrText: recognizedText,
       fileSizeBytes: await imageFile.length(),
       documentDate: aiData['date'],
+
+      // Save EmbeddingGemma vector
+      embedding: embedding,
     );
 
-    //2. Create the MemoryItem wrapper
+    // 4. Create MemoryItem wrapper
     final memoryItem = MemoryItem();
     memoryItem.todoTask.target = newTask;
     memoryItem.memoryNum = true;
 
-    //3. Save to db
+    // 5. Save to ObjectBox
     store.box<MemoryItem>().put(memoryItem);
 
+    print('===== EMBEDDING SAVED =====');
+    print('Embedding exists: ${newTask.embedding != null}');
+    print('Embedding length: ${newTask.embedding?.length}');
+    print('First 5 values: ${newTask.embedding?.take(5).toList()}');
   }
 
   Future<void> saveOcrAsJson({
@@ -230,6 +257,12 @@ class _OCRScreenState extends State<OCRScreen> {
   }
 
   @override
+  void dispose() {
+    _embeddingService.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -299,5 +332,6 @@ class _OCRScreenState extends State<OCRScreen> {
         ),
       ),
     );
+
   }
 }
