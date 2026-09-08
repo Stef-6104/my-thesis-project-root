@@ -120,77 +120,143 @@ OCR Text: $recognizedText
     );
   }
 
-  Future<Map<String, dynamic>> extractStructuredData(
-      String ocrText,
-      ) async {
-    final model = FirebaseAI.googleAI().generativeModel(
-      model: 'gemini-2.5-flash',
-    );
+  Future<Map<String, dynamic>> extractStructuredData(String ocrText) async {
+  final model = FirebaseAI.googleAI().generativeModel(
+    model: 'gemini-2.5-flash',
+    generationConfig: GenerationConfig(
+    responseMimeType: 'application/json',
+    temperature: 0.2,
+    ),
+  );
 
-    final response = await model.generateContent([
-      Content.text('''
-        Analyze the following OCR text.
-        
-        Determine:
-        
-        1. title
-           - Main heading or title of the document.
-           - If none exists, return null.
-        
-        2. date
-           - The primary document date.
-           - Convert to YYYY-MM-DD when possible.
-           - If none exists, return null.
-        
-        3. deadline
-           - Submission date, due date, closing date, deadline, etc.
-           - Convert to YYYY-MM-DD when possible.
-           - If none exists, return null.
-        
-        4. body
-           - The main content of the document excluding title and dates.
-        
-        Return ONLY valid JSON.
-        
-        Format:
-        
-        {
-          "title": "...",
-          "date": "...",
-          "deadline": "...",
-          "body": "..."
-        }
-        
-        OCR TEXT:
-        
-        $ocrText
-        ''')
-    ]);
-
-    final text = response.text ?? '{}';
-
-    print(response.text);
-
-// Remove Markdown code fences if present.
-    final cleanedText = text
-        .replaceAll('```json', '')
-        .replaceAll('```', '')
-        .trim();
-
-    print("Gemini Response:");
-    print(cleanedText);
-
-    try {
-      return jsonDecode(cleanedText);
-    } catch (e) {
-      print("JSON Decode Error: $e");
-
-      return {
-        "error": "Invalid JSON returned",
-        "rawResponse": cleanedText,
-      };
+  final prompt = '''
+  You are an intelligent multimodal parser and summarizer for a productivity and memory management app.
+  Analyze the following unstructured OCR text extracted from an image or screenshot.
+  
+  Extract and synthesize the information into the following structured JSON format:
+  
+  {
+    "title": "A concise, clear document/event/task title (max 6-8 words)",
+    "summary": [
+      "Key takeaway or description bullet point 1",
+      "Key takeaway or description bullet point 2",
+      "Key takeaway or description bullet point 3"
+    ],
+    "deadline": "Formatted deadline or event timestamp (e.g. MM/DD/YYYY, HH:MM AM/PM or YYYY-MM-DD HH:mm). If none exists, return null.",
+    "task": {
+      "title": "Actionable task name",
+      "due_date_time": "ISO-8601 string (YYYY-MM-DDTHH:mm:ss) or readable format if a due date/time is mentioned, otherwise null"
     }
   }
+  
+  CRITICAL RULES:
+  1. DO NOT copy-paste the entire raw OCR paragraph into the summary. Synthesize the text into 2 to 4 concise, high-value bullet points.
+  2. Search aggressively for dates, deadlines, assembly times, and submission cutoffs. Convert relative dates or explicit dates into clean, standardized formats.
+  3. If no deadline exists, return null for "deadline".
+  4. Return ONLY valid, parseable JSON matching the schema above.
+  
+  OCR TEXT:
+  $ocrText
+  ''';
+
+  try {
+  final response = await model.generateContent([Content.text(prompt)]);
+  final rawText = response.text?.trim() ?? '{}';
+
+  String cleanedJson = rawText;
+  if (cleanedJson.startsWith('```json')) {
+    cleanedJson = cleanedJson.replaceFirst('```json', '');
+  }
+  if (cleanedJson.startsWith('```')) {
+    cleanedJson = cleanedJson.replaceFirst('```', '');
+  }
+  if (cleanedJson.endsWith('```')) {
+    cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
+  }
+    cleanedJson = cleanedJson.trim();
+
+    return jsonDecode(cleanedJson);
+  } catch (e) {
+    return {
+    "title": "Scan Result",
+    "summary": ["Failed to parse structured summary."],
+    "deadline": null,
+    "task": null,
+  };}}
+
+//   Future<Map<String, dynamic>> extractStructuredData(
+//       String ocrText,
+//       ) async {
+//     final model = FirebaseAI.googleAI().generativeModel(
+//       model: 'gemini-2.5-flash',
+//     );
+//
+//     final response = await model.generateContent([
+//       Content.text('''
+//         Analyze the following OCR text.
+//
+//         Determine:
+//
+//         1. title
+//            - Main heading or title of the document.
+//            - If none exists, return null.
+//
+//         2. date
+//            - The primary document date.
+//            - Convert to YYYY-MM-DD when possible.
+//            - If none exists, return null.
+//
+//         3. deadline
+//            - Submission date, due date, closing date, deadline, etc.
+//            - Convert to YYYY-MM-DD when possible.
+//            - If none exists, return null.
+//
+//         4. body
+//            - The main content of the document excluding title and dates.
+//
+//         Return ONLY valid JSON.
+//
+//         Format:
+//
+//         {
+//           "title": "...",
+//           "date": "...",
+//           "deadline": "...",
+//           "body": "..."
+//         }
+//
+//         OCR TEXT:
+//
+//         $ocrText
+//         ''')
+//     ]);
+//
+//     final text = response.text ?? '{}';
+//
+//     print(response.text);
+//
+// // Remove Markdown code fences if present.
+//     final cleanedText = text
+//         .replaceAll('```json', '')
+//         .replaceAll('```', '')
+//         .trim();
+//
+//     print("Gemini Response:");
+//     print(cleanedText);
+//
+//     try {
+//       return jsonDecode(cleanedText);
+//     } catch (e) {
+//       print("JSON Decode Error: $e");
+//
+//       return {
+//         "error": "Invalid JSON returned",
+//         "rawResponse": cleanedText,
+//       };
+//     }
+//   }
+
+
 
   Future<void> _pickImage(ImageSource source) async {
     final XFile? file = await _picker.pickImage(source: source);
